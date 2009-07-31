@@ -53,7 +53,7 @@ sub libmemcached_test_create {
     # XXX ideally this should be a much 'simpler/safer' command
     memcached_get($memc, "foo");
     plan skip_all => "Can't talk to any memcached servers"
-        if memcached_errstr($memc) !~ /SUCCESS|NOT FOUND/;
+        if memcached_errstr($memc) !~ /SUCCESS|NOT FOUND|SERVER END/;
 
     plan skip_all => "memcached server version less than $args->{min_version}"
         if $args->{min_version}
