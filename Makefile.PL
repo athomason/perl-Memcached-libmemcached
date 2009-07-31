@@ -181,6 +181,7 @@ sub build_libmemcached {
     run("cd $lmcd_src && make distclean") if -f "$lmcd_src/Makefile";
     my $configure_args = '--with-pic'; #'--disable-shared';
     $configure_args .= ' --enable-debug' if $opt_g;
+    $configure_args .= ' --enable-deprecated';
     $configure_args .= ' CFLAGS=-pg LDFLAGS=-pg' if $opt_pg;
     if ($is_developer) {    # XXX make a Makefile.PL argument/option
     }
@@ -271,7 +272,9 @@ sub extract_libmemcached_constants {
                 $in_enum = 1;
             }
             elsif (m/\# \s* define \s+ (MEMCACHED_\w+)/x) {
-                $libmemcached_const{$1} = "defines";
+                my $symbol = $1;
+                next if $symbol =~ /_H$/;
+                $libmemcached_const{$symbol} = "defines";
             }
         }
     }
