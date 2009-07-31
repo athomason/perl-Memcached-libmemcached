@@ -135,8 +135,8 @@ LIBMEMCACHED_LOCAL
 void server_list_free(memcached_st *ptr, memcached_server_st *servers);
 
 LIBMEMCACHED_LOCAL
-memcached_return memcached_key_test(char **keys, size_t *key_length,
-                                    unsigned int number_of_keys);
+memcached_return memcached_key_test(const char **keys, size_t *key_length,
+                                    size_t number_of_keys);
 
 
 LIBMEMCACHED_LOCAL

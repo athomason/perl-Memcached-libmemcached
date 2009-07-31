@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-static char *memcached_stat_keys[] = {
+static const char *memcached_stat_keys[] = {
   "pid",
   "uptime",
   "time",
@@ -148,7 +148,8 @@ static memcached_return set_data(memcached_stat_st *memc_stat, char *key, char *
              strcmp("cas_badval", key) == 0 ||
              strcmp("cmd_flush", key) == 0 ||
              strcmp("accepting_conns", key) == 0 ||
-             strcmp("listen_disabled_num", key) == 0))
+             strcmp("listen_disabled_num", key) == 0 ||
+             strcmp("conn_yields", key) == 0))
   {
     WATCHPOINT_STRING(key);
     return MEMCACHED_UNKNOWN_STAT_KEY;

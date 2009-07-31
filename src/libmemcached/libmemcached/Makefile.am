@@ -12,6 +12,7 @@ noinst_HEADERS = libmemcached_probes.h \
 
 pkginclude_HEADERS= memcached.h \
 		    memcached.hh \
+		    memcached_batch.h \
                     memcached_configure.h \
 		    memcached_constants.h \
 		    memcached_get.h \
@@ -38,6 +39,7 @@ libmemcached_la_SOURCES = crc.c \
 			  memcached.c \
 			  memcached_auto.c \
 			  memcached_analyze.c \
+			  memcached_batch.c \
 			  memcached_behavior.c \
 			  memcached_connect.c \
 			  memcached_delete.c \

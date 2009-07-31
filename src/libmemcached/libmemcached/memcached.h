@@ -22,6 +22,7 @@
 #include <libmemcached/memcached_configure.h>
 #include <libmemcached/memcached_constants.h>
 #include <libmemcached/memcached_types.h>
+#include <libmemcached/memcached_batch.h>
 #include <libmemcached/memcached_get.h>
 #include <libmemcached/memcached_server.h>
 #include <libmemcached/memcached_string.h>
@@ -163,7 +164,7 @@ void memcached_stat_free(memcached_st *, memcached_stat_st *);
 LIBMEMCACHED_API
 memcached_stat_st *memcached_stat(memcached_st *ptr, char *args, memcached_return *error);
 LIBMEMCACHED_API
-memcached_return memcached_stat_servername(memcached_stat_st *stat, char *args, 
+memcached_return memcached_stat_servername(memcached_stat_st *memc_stat, char *args, 
                                            char *hostname, unsigned int port);
 LIBMEMCACHED_API
 memcached_return memcached_flush(memcached_st *ptr, time_t expiration);
@@ -172,7 +173,7 @@ memcached_return memcached_verbosity(memcached_st *ptr, unsigned int verbosity);
 LIBMEMCACHED_API
 void memcached_quit(memcached_st *ptr);
 LIBMEMCACHED_API
-char *memcached_strerror(memcached_st *ptr, memcached_return rc);
+const char *memcached_strerror(memcached_st *ptr, memcached_return rc);
 LIBMEMCACHED_API
 memcached_return memcached_behavior_set(memcached_st *ptr, memcached_behavior flag, uint64_t data);
 LIBMEMCACHED_API
@@ -235,10 +236,10 @@ LIBMEMCACHED_API
 memcached_server_st *memcached_servers_parse(const char *server_strings);
 
 LIBMEMCACHED_API
-char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *stat, 
+char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *memc_stat, 
                                const char *key, memcached_return *error);
 LIBMEMCACHED_API
-char ** memcached_stat_get_keys(memcached_st *ptr, memcached_stat_st *stat, 
+char ** memcached_stat_get_keys(memcached_st *ptr, memcached_stat_st *memc_stat, 
                                 memcached_return *error);
 
 LIBMEMCACHED_API
