@@ -54,6 +54,8 @@ char *memcached_strerror(memcached_st *ptr __attribute__((unused)), memcached_re
     return "SERVER VALUE";
   case MEMCACHED_STAT:
     return "STAT VALUE";
+  case MEMCACHED_ITEM:
+    return "ITEM VALUE";
   case MEMCACHED_ERRNO:
     return "SYSTEM ERROR";
   case MEMCACHED_FAIL_UNIX_SOCKET:
@@ -70,9 +72,15 @@ char *memcached_strerror(memcached_st *ptr __attribute__((unused)), memcached_re
     return "A TIMEOUT OCCURRED";
   case MEMCACHED_BAD_KEY_PROVIDED:
     return "A BAD KEY WAS PROVIDED/CHARACTERS OUT OF RANGE";
+  case MEMCACHED_INVALID_HOST_PROTOCOL:
+    return "THE HOST TRANSPORT PROTOCOL DOES NOT MATCH THAT OF THE CLIENT";
+  case MEMCACHED_SERVER_MARKED_DEAD:
+    return "SERVER IS MARKED DEAD";
+  case MEMCACHED_UNKNOWN_STAT_KEY:
+    return "ENCOUNTERED AN UNKNOWN STAT KEY";
   case MEMCACHED_MAXIMUM_RETURN:
     return "Gibberish returned!";
   default:
     return "Gibberish returned!";
-  };
+  }
 }

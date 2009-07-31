@@ -1,7 +1,7 @@
 =head1 NAME
 
 memcached_server_list_free, memcached_server_list_append,
-memcached_server_list_count, memcached_servers_parse
+memcached_server_list_count, memcached_servers_parse - Manage server list
 
 =head1 LIBRARY
 
@@ -21,7 +21,7 @@ C Client Library for memcached (libmemcached, -lmemcached)
 
   unsigned int memcached_server_list_count (memcached_server_st *ptr);
 
-  memcached_server_st *memcached_servers_parse (char *server_strings);
+  memcached_server_st *memcached_servers_parse (const char *server_strings);
 
 =head1 DESCRIPTION
 

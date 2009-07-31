@@ -1,8 +1,9 @@
 #include "common.h"
 
+
 /* Defines */
-static uint64_t FNV_64_INIT= 0xcbf29ce484222325LL;
-static uint64_t FNV_64_PRIME= 0x100000001b3LL;
+static uint64_t FNV_64_INIT= UINT64_C(0xcbf29ce484222325);
+static uint64_t FNV_64_PRIME= UINT64_C(0x100000001b3);
 
 static uint32_t FNV_32_INIT= 2166136261UL;
 static uint32_t FNV_32_PRIME= 16777619;
@@ -11,7 +12,7 @@ static uint32_t FNV_32_PRIME= 16777619;
 static uint32_t internal_generate_hash(const char *key, size_t key_length);
 static uint32_t internal_generate_md5(const char *key, size_t key_length);
 
-uint32_t generate_hash_value(const char *key, size_t key_length, memcached_hash hash_algorithm)
+uint32_t memcached_generate_hash_value(const char *key, size_t key_length, memcached_hash hash_algorithm)
 {
   uint32_t hash= 1; /* Just here to remove compile warning */
   uint32_t x= 0;
@@ -76,7 +77,9 @@ uint32_t generate_hash_value(const char *key, size_t key_length, memcached_hash 
     break;
     case MEMCACHED_HASH_HSIEH:
     {
+#ifdef HAVE_HSIEH_HASH
       hash= hsieh_hash(key, key_length);
+#endif
       break;
     }
     case MEMCACHED_HASH_MURMUR:
@@ -87,6 +90,11 @@ uint32_t generate_hash_value(const char *key, size_t key_length, memcached_hash 
     case MEMCACHED_HASH_JENKINS:
     {
       hash=jenkins_hash(key, key_length, 13);
+      break;
+    }
+    default:
+    {
+      WATCHPOINT_ASSERT(hash_algorithm);
       break;
     }
   }
@@ -103,7 +111,7 @@ uint32_t generate_hash(memcached_st *ptr, const char *key, size_t key_length)
   if (ptr->number_of_hosts == 1)
     return 0;
 
-  hash= generate_hash_value(key, key_length, ptr->hash);
+  hash= memcached_generate_hash_value(key, key_length, ptr->hash);
   WATCHPOINT_ASSERT(hash);
   return hash;
 }
@@ -135,7 +143,6 @@ static uint32_t dispatch_host(memcached_st *ptr, uint32_t hash)
         right= begin;
       return right->index;
     } 
-    break;
   case MEMCACHED_DISTRIBUTION_MODULA:
     return hash % ptr->number_of_hosts;
   case MEMCACHED_DISTRIBUTION_RANDOM:
@@ -145,8 +152,7 @@ static uint32_t dispatch_host(memcached_st *ptr, uint32_t hash)
     return hash % ptr->number_of_hosts;
   }
 
-  WATCHPOINT_ASSERT(0); /* We should never reach here */
-  return 0;
+  /* NOTREACHED */
 }
 
 /* 
@@ -164,12 +170,15 @@ uint32_t memcached_generate_hash(memcached_st *ptr, const char *key, size_t key_
 
   if (ptr->flags & MEM_HASH_WITH_PREFIX_KEY)
   {
-    int temp_len= ptr->prefix_key_length + key_length;
-    char *temp= (char *)malloc(temp_len);
+    size_t temp_length= ptr->prefix_key_length + key_length;
+    char temp[temp_length];
+
+    if (temp_length > MEMCACHED_MAX_KEY -1)
+      return 0;
+
     strncpy(temp, ptr->prefix_key, ptr->prefix_key_length);
     strncpy(temp + ptr->prefix_key_length, key, key_length);
-    hash= generate_hash(ptr, temp, temp_len);
-    free(temp);
+    hash= generate_hash(ptr, temp, temp_length);
   }
   else
   {
@@ -177,6 +186,14 @@ uint32_t memcached_generate_hash(memcached_st *ptr, const char *key, size_t key_
   }
 
   WATCHPOINT_ASSERT(hash);
+
+  if (memcached_behavior_get(ptr, MEMCACHED_BEHAVIOR_AUTO_EJECT_HOSTS) && ptr->next_distribution_rebuild) {
+    struct timeval now;
+
+    if (gettimeofday(&now, NULL) == 0 &&
+        now.tv_sec > ptr->next_distribution_rebuild)
+      run_distribution(ptr);
+  }
 
   return dispatch_host(ptr, hash);
 }
@@ -186,7 +203,7 @@ static uint32_t internal_generate_hash(const char *key, size_t key_length)
   const char *ptr= key;
   uint32_t value= 0;
 
-  while (--key_length) 
+  while (key_length--) 
   {
     value += *ptr++;
     value += (value << 10);

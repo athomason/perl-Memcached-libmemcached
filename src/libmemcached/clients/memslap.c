@@ -1,3 +1,4 @@
+#include "libmemcached/common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,7 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include <libmemcached/memcached.h>
 
@@ -77,6 +79,7 @@ static unsigned int opt_createial_load= 0;
 static unsigned int opt_concurrency= 0;
 static int opt_displayflag= 0;
 static char *opt_servers= NULL;
+static int opt_udp_io= 0;
 test_type opt_test= SET_TEST;
 
 int main(int argc, char *argv[])
@@ -86,7 +89,7 @@ int main(int argc, char *argv[])
 
   memset(&conclusion, 0, sizeof(conclusions_st));
 
-  srandom(time(NULL));
+  srandom((unsigned int)time(NULL));
   options_parse(argc, argv);
 
   if (!opt_servers)
@@ -139,9 +142,19 @@ void scheduler(memcached_server_st *servers, conclusions_st *conclusion)
                               PTHREAD_CREATE_DETACHED);
 
   memc= memcached_create(NULL);
+
+  /* We need to set udp behavior before adding servers to the client */
+  if (opt_udp_io)
+  {
+    memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_USE_UDP,
+                           (uint64_t)opt_udp_io);
+    for(x= 0; x < servers[0].count; x++ )
+      servers[x].type= MEMCACHED_CONNECTION_UDP;
+  }
   memcached_server_push(memc, servers);
 
-  memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, opt_binary);
+  memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL,
+                         (uint64_t)opt_binary);
   
   if (opt_flush)
     flush_all(memc);
@@ -167,8 +180,7 @@ void scheduler(memcached_server_st *servers, conclusions_st *conclusion)
   for (x= 0; x < opt_concurrency; x++)
   {
     thread_context_st *context;
-    context= (thread_context_st *)malloc(sizeof(thread_context_st));
-    memset(context, 0, sizeof(thread_context_st));
+    context= (thread_context_st *)calloc(1, sizeof(thread_context_st));
 
     context->memc= memcached_clone(NULL, memc);
     context->test= opt_test;
@@ -240,6 +252,7 @@ void options_parse(int argc, char *argv[])
       {"verbose", no_argument, &opt_verbose, OPT_VERBOSE},
       {"version", no_argument, NULL, OPT_VERSION},
       {"binary", no_argument, NULL, OPT_BINARY},
+      {"udp", no_argument, NULL, OPT_UDP},
       {0, 0, 0, 0},
     };
 
@@ -253,6 +266,15 @@ void options_parse(int argc, char *argv[])
     switch (option_rv)
     {
     case 0:
+      break;
+    case OPT_UDP:
+      if (opt_test == GET_TEST)
+      {
+        fprintf(stderr, "You can not run a get test in UDP mode. UDP mode "
+                  "does not currently support get ops.\n");
+        exit(1);
+      }
+      opt_udp_io= 1;
       break;
     case OPT_BINARY:
       opt_binary = 1;
@@ -274,7 +296,15 @@ void options_parse(int argc, char *argv[])
       break;
     case OPT_SLAP_TEST:
       if (!strcmp(optarg, "get"))
+      {
+        if (opt_udp_io == 1)
+        {
+          fprintf(stderr, "You can not run a get test in UDP mode. UDP mode "
+                  "does not currently support get ops.\n");
+          exit(1);
+        }
         opt_test= GET_TEST ;
+      }
       else if (!strcmp(optarg, "set"))
         opt_test= SET_TEST;
       else 
@@ -284,13 +314,13 @@ void options_parse(int argc, char *argv[])
       }
       break;
     case OPT_SLAP_CONCURRENCY:
-      opt_concurrency= strtol(optarg, (char **)NULL, 10);
+      opt_concurrency= (unsigned int)strtoul(optarg, (char **)NULL, 10);
       break;
     case OPT_SLAP_EXECUTE_NUMBER:
-      opt_execute_number= strtol(optarg, (char **)NULL, 10);
+      opt_execute_number= (unsigned int)strtoul(optarg, (char **)NULL, 10);
       break;
     case OPT_SLAP_INITIAL_LOAD:
-      opt_createial_load= strtol(optarg, (char **)NULL, 10);
+      opt_createial_load= (unsigned int)strtoul(optarg, (char **)NULL, 10);
       break;
     case '?':
       /* getopt_long already printed an error message. */
@@ -343,10 +373,14 @@ void *run_task(void *p)
   switch (context->test)
   {
   case SET_TEST:
+    assert(context->execute_pairs);
     execute_set(memc, context->execute_pairs, context->execute_number);
     break;
   case GET_TEST:
     execute_get(memc, context->initial_pairs, context->initial_number);
+    break;
+  default:
+    WATCHPOINT_ASSERT(context->test);
     break;
   }
 
@@ -373,17 +407,17 @@ void flush_all(memcached_st *memc)
 pairs_st *load_create_data(memcached_st *memc, unsigned int number_of, 
                            unsigned int *actual_loaded)
 {
-  memcached_st *clone;
+  memcached_st *memc_clone;
   pairs_st *pairs;
 
-  clone= memcached_clone(NULL, memc);
+  memc_clone= memcached_clone(NULL, memc);
   /* We always used non-blocking IO for load since it is faster */
-  memcached_behavior_set(clone, MEMCACHED_BEHAVIOR_NO_BLOCK, 0);
+  memcached_behavior_set(memc_clone, MEMCACHED_BEHAVIOR_NO_BLOCK, 0);
 
   pairs= pairs_generate(number_of, 400);
-  *actual_loaded= execute_set(clone, pairs, number_of);
+  *actual_loaded= execute_set(memc_clone, pairs, number_of);
 
-  memcached_free(clone);
+  memcached_free(memc_clone);
 
   return pairs;
 }

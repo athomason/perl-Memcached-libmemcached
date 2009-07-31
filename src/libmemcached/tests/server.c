@@ -4,11 +4,14 @@
 
 #define TEST_PORT_BASE MEMCACHED_DEFAULT_PORT+10 
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <signal.h>
 #include <libmemcached/memcached.h>
 #include <unistd.h>
 #include "server.h"
@@ -37,20 +40,36 @@ void server_startup(server_startup_st *construct)
         int count;
         int status;
 
-        if (construct->udp){
-          if(x == 0) {
-            sprintf(buffer, "memcached -d -P /tmp/%umemc.pid -t 1 -U %u -m 128", x, x+ TEST_PORT_BASE);
-          } else {
-            sprintf(buffer, "memcached -d -P /tmp/%umemc.pid -t 1 -U %u", x, x+ TEST_PORT_BASE);
+        sprintf(buffer, "/tmp/%umemc.pid", x);
+        if (access(buffer, F_OK) == 0) 
+        {
+          FILE *fp= fopen(buffer, "r");
+          remove(buffer);
+
+          if (fp != NULL)
+          {
+            if (fgets(buffer, sizeof(buffer), fp) != NULL)
+            { 
+              pid_t pid = (pid_t)atol(buffer);
+              if (pid != 0) 
+                kill(pid, SIGTERM);
+            }
+
+            fclose(fp);
           }
         }
-        else{
-          if(x == 0) {
-            sprintf(buffer, "memcached -d -P /tmp/%umemc.pid -t 1 -p %u -m 128", x, x+ TEST_PORT_BASE);
-          } else {
-            sprintf(buffer, "memcached -d -P /tmp/%umemc.pid -t 1 -p %u", x, x+ TEST_PORT_BASE);
-          }
+
+        if (x == 0)
+        {
+          sprintf(buffer, "%s -d -P /tmp/%umemc.pid -t 1 -p %u -U %u -m 128",
+                    MEMCACHED_BINARY, x, x + TEST_PORT_BASE, x + TEST_PORT_BASE);
+        } 
+        else
+        {
+          sprintf(buffer, "%s -d -P /tmp/%umemc.pid -t 1 -p %u -U %u",
+                    MEMCACHED_BINARY, x, x + TEST_PORT_BASE, x + TEST_PORT_BASE);
         }
+        fprintf(stderr, "STARTING SERVER: %s\n", buffer);
         status= system(buffer);
         count= sprintf(end_ptr, "localhost:%u,", x + TEST_PORT_BASE);
         end_ptr+= count;
@@ -65,7 +84,7 @@ void server_startup(server_startup_st *construct)
 
   assert(construct->servers);
 
-  srandom(time(NULL));
+  srandom((unsigned int)time(NULL));
 
   for (x= 0; x < memcached_server_list_count(construct->servers); x++)
   {
@@ -87,8 +106,9 @@ void server_shutdown(server_startup_st *construct)
     {
       char buffer[1024]; /* Nothing special for number */
       sprintf(buffer, "cat /tmp/%umemc.pid | xargs kill", x);
-      system(buffer);
-
+      /* We have to check the return value of this or the compiler will yell */
+      int sys_ret= system(buffer);
+      assert(sys_ret != -1); 
       sprintf(buffer, "/tmp/%umemc.pid", x);
       unlink(buffer);
     }

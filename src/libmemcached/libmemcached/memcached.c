@@ -9,18 +9,20 @@ memcached_st *memcached_create(memcached_st *ptr)
 
   if (ptr == NULL)
   {
-    ptr= (memcached_st *)malloc(sizeof(memcached_st));
+    ptr= (memcached_st *)calloc(1, sizeof(memcached_st));
 
     if (!ptr)
       return NULL; /*  MEMCACHED_MEMORY_ALLOCATION_FAILURE */
 
-    memset(ptr, 0, sizeof(memcached_st));
-    ptr->is_allocated= MEMCACHED_ALLOCATED;
+    ptr->is_allocated= true;
   }
   else
   {
     memset(ptr, 0, sizeof(memcached_st));
   }
+
+  memcached_set_memory_allocators(ptr, NULL, NULL, NULL, NULL);
+
   result_ptr= memcached_result_create(ptr, &ptr->result);
   WATCHPOINT_ASSERT(result_ptr);
   ptr->poll_timeout= MEMCACHED_DEFAULT_TIMEOUT;
@@ -46,22 +48,12 @@ void memcached_free(memcached_st *ptr)
     ptr->on_cleanup(ptr);
 
   if (ptr->continuum)
-  {
-    if (ptr->call_free)
-      ptr->call_free(ptr, ptr->continuum);
-    else
-      free(ptr->continuum);
-  }
+    ptr->call_free(ptr, ptr->continuum);
 
-  if (ptr->is_allocated == MEMCACHED_ALLOCATED)
-  {
-    if (ptr->call_free)
-      ptr->call_free(ptr, ptr);
-    else
-      free(ptr);
-  }
+  if (ptr->is_allocated)
+    ptr->call_free(ptr, ptr);
   else
-    ptr->is_allocated= MEMCACHED_USED;
+    memset(ptr, 0, sizeof(memcached_st));
 }
 
 /*
@@ -77,26 +69,15 @@ memcached_st *memcached_clone(memcached_st *clone, memcached_st *source)
   if (source == NULL)
     return memcached_create(clone);
 
-  if (clone && clone->is_allocated == MEMCACHED_USED)
+  if (clone && clone->is_allocated)
   {
     return NULL;
   }
-  
+
   new_clone= memcached_create(clone);
-  
+
   if (new_clone == NULL)
     return NULL;
-
-  if (source->hosts)
-    rc= memcached_server_push(new_clone, source->hosts);
-
-  if (rc != MEMCACHED_SUCCESS)
-  {
-    memcached_free(new_clone);
-
-    return NULL;
-  }
-
 
   new_clone->flags= source->flags;
   new_clone->send_size= source->send_size;
@@ -117,8 +98,25 @@ memcached_st *memcached_clone(memcached_st *clone, memcached_st *source)
   new_clone->call_free= source->call_free;
   new_clone->call_malloc= source->call_malloc;
   new_clone->call_realloc= source->call_realloc;
+  new_clone->call_calloc= source->call_calloc;
   new_clone->get_key_failure= source->get_key_failure;
   new_clone->delete_trigger= source->delete_trigger;
+  new_clone->server_failure_limit= source->server_failure_limit;
+  new_clone->io_msg_watermark= source->io_msg_watermark;
+  new_clone->io_bytes_watermark= source->io_bytes_watermark;
+  new_clone->io_key_prefetch= source->io_key_prefetch;
+  new_clone->number_of_replicas= source->number_of_replicas;
+
+  if (source->hosts)
+    rc= memcached_server_push(new_clone, source->hosts);
+
+  if (rc != MEMCACHED_SUCCESS)
+  {
+    memcached_free(new_clone);
+
+    return NULL;
+  }
+
 
   if (source->prefix_key[0] != 0)
   {
@@ -138,4 +136,15 @@ memcached_st *memcached_clone(memcached_st *clone, memcached_st *source)
     source->on_clone(source, new_clone);
 
   return new_clone;
+}
+void *memcached_get_user_data(memcached_st *ptr)
+{
+  return ptr->user_data;
+}
+
+void *memcached_set_user_data(memcached_st *ptr, void *data)
+{
+  void *ret= ptr->user_data;
+  ptr->user_data= data;
+  return ret;
 }

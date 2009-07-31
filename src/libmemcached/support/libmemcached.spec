@@ -1,16 +1,17 @@
-Summary: memcached C library and command line tools
-Name: libmemcached
-Version: 0.25
-Release: 1
-License: BSD
-Group: System Environment/Libraries
-BuildRequires: gcc-c++
-URL: http://tangent.org/552/libmemcached.html
+Name:      libmemcached
+Summary:   memcached C library and command line tools
+Version: 0.31
+Release:   1
+License:   BSD
+Group:     System Environment/Libraries
+URL:       http://tangent.org/552/libmemcached.html
+Source0:   http://download.tangent.org/libmemcached-%{version}.tar.gz
 
-Packager: Jeff Fisher <guppy@techmonkeys.org>
+# For test suite
+BuildRequires: memcached
 
-Source: http://download.tangent.org/libmemcached-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
 
 %description
 libmemcached is a C client library to the memcached server
@@ -27,112 +28,78 @@ memslap - Generate testing loads on a memcached cluster.
 memcp - Copy files to memcached servers.
 memerror - Creates human readable messages from libmemecached error codes.
 
+
+%package devel
+Summary: Header files and development libraries for %{name}
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+
+%description devel
+This package contains the header files and development libraries
+for %{name}. If you like to develop programs using %{name}, 
+you will need to install %{name}-devel.
+
+
 %prep
 %setup -q
 
-%configure
+%{__mkdir} examples
+%{__cp} tests/*.{c,cpp,h} examples/
+
 
 %build
+%configure
 %{__make} %{_smp_mflags}
+
 
 %install
 %{__rm} -rf %{buildroot}
 %{__make} install  DESTDIR="%{buildroot}" AM_INSTALL_PROGRAM_FLAGS=""
 
+
+%check
+# test suite cannot run in mock (same port use for memcache server on all arch)
+# 1 test seems to fail.. 
+#%{__make} test
+
+
 %clean
 %{__rm} -rf %{buildroot}
 
+
+%post -p /sbin/ldconfig
+
+
+%postun -p /sbin/ldconfig
+ 
+
 %files
-%{_bindir}/memcat
-%{_bindir}/memcp
-%{_bindir}/memerror
-%{_bindir}/memflush
-%{_bindir}/memrm
-%{_bindir}/memstat
-%{_bindir}/memslap
-%{_includedir}/libmemcached/memcached.h
-%{_includedir}/libmemcached/memcached.hh
-%{_includedir}/libmemcached/libmemcached_config.h
-%{_includedir}/libmemcached/memcached_constants.h
-%{_includedir}/libmemcached/memcached_get.h
-%{_includedir}/libmemcached/memcached_result.h
-%{_includedir}/libmemcached/memcached_server.h
-%{_includedir}/libmemcached/memcached_storage.h
-%{_includedir}/libmemcached/memcached_string.h
-%{_includedir}/libmemcached/memcached_types.h
-%{_includedir}/libmemcached/memcached_watchpoint.h
-%{_libdir}/libmemcached.a
-%{_libdir}/libmemcached.la
+%defattr (-,root,root,-) 
+%doc AUTHORS COPYING NEWS README THANKS TODO
+%{_bindir}/mem*
+%exclude %{_libdir}/libmemcached.a
+%exclude %{_libdir}/libmemcached.la
+%exclude %{_libdir}/libmemcachedutil.a
+%exclude %{_libdir}/libmemcachedutil.la
+%{_libdir}/libmemcached.so.*
+%{_libdir}/libmemcachedutil.so.*
+%{_mandir}/man1/mem*
+
+
+%files devel
+%defattr (-,root,root,-) 
+%doc examples
+%{_includedir}/libmemcached
 %{_libdir}/libmemcached.so
-%{_libdir}/libmemcached.so.2
-%{_libdir}/libmemcached.so.2.0.0
+%{_libdir}/libmemcachedutil.so
 %{_libdir}/pkgconfig/libmemcached.pc
-%{_mandir}/man1/memcat.1.gz
-%{_mandir}/man1/memcp.1.gz
-%{_mandir}/man1/memerror.1.gz
-%{_mandir}/man1/memflush.1.gz
-%{_mandir}/man1/memrm.1.gz
-%{_mandir}/man1/memslap.1.gz
-%{_mandir}/man1/memstat.1.gz
-%{_mandir}/man3/libmemcached.3.gz
-%{_mandir}/man3/libmemcached_examples.3.gz
-%{_mandir}/man3/memcached_add.3.gz
-%{_mandir}/man3/memcached_add_by_key.3.gz
-%{_mandir}/man3/memcached_append.3.gz
-%{_mandir}/man3/memcached_append_by_key.3.gz
-%{_mandir}/man3/memcached_behavior_get.3.gz
-%{_mandir}/man3/memcached_behavior_set.3.gz
-%{_mandir}/man3/memcached_cas.3.gz
-%{_mandir}/man3/memcached_cas_by_key.3.gz
-%{_mandir}/man3/memcached_callback_get.3.gz
-%{_mandir}/man3/memcached_callback_set.3.gz
-%{_mandir}/man3/memcached_clone.3.gz
-%{_mandir}/man3/memcached_create.3.gz
-%{_mandir}/man3/memcached_decrement.3.gz
-%{_mandir}/man3/memcached_delete.3.gz
-%{_mandir}/man3/memcached_delete_by_key.3.gz
-%{_mandir}/man3/memcached_fetch.3.gz
-%{_mandir}/man3/memcached_fetch_result.3.gz
-%{_mandir}/man3/memcached_fetch_execute.3.gz
-%{_mandir}/man3/memcached_free.3.gz
-%{_mandir}/man3/memcached_get.3.gz
-%{_mandir}/man3/memcached_get_by_key.3.gz
-%{_mandir}/man3/memcached_increment.3.gz
-%{_mandir}/man3/memcached_mget.3.gz
-%{_mandir}/man3/memcached_mget_by_key.3.gz
-%{_mandir}/man3/memcached_prepend.3.gz
-%{_mandir}/man3/memcached_prepend_by_key.3.gz
-%{_mandir}/man3/memcached_quit.3.gz
-%{_mandir}/man3/memcached_replace.3.gz
-%{_mandir}/man3/memcached_replace_by_key.3.gz
-%{_mandir}/man3/memcached_server_add.3.gz
-%{_mandir}/man3/memcached_server_count.3.gz
-%{_mandir}/man3/memcached_server_list.3.gz
-%{_mandir}/man3/memcached_server_list_append.3.gz
-%{_mandir}/man3/memcached_server_list_count.3.gz
-%{_mandir}/man3/memcached_server_list_free.3.gz
-%{_mandir}/man3/memcached_server_push.3.gz
-%{_mandir}/man3/memcached_servers_parse.3.gz
-%{_mandir}/man3/memcached_set.3.gz
-%{_mandir}/man3/memcached_set_by_key.3.gz
-%{_mandir}/man3/memcached_stat.3.gz
-%{_mandir}/man3/memcached_stat_get_keys.3.gz
-%{_mandir}/man3/memcached_stat_get_value.3.gz
-%{_mandir}/man3/memcached_stat_servername.3.gz
-%{_mandir}/man3/memcached_strerror.3.gz
-%{_mandir}/man3/memcached_verbosity.3.gz
-%{_mandir}/man3/memcached_lib_version.3.gz
-%{_mandir}/man3/memcached_version.3.gz
+%{_mandir}/man3/libmemcached*.3.gz
+%{_mandir}/man3/memcached_*.3.gz
+
 
 %changelog
-* Mon Nov  5 2007 Brian Aker <brian@tangent.org> - 0.8-1
-- Automated version number
+* Sat Apr 25 2009 Remi Collet <rpms@famillecollet.com> - 0.28-1
+- Initial RPM from Brian Aker spec
+- create -devel subpackage
+- add %%post %%postun %%check section
 
-* Wed Oct  3 2007 Brian Aker <brian@tangent.org> - 0.4-1
-- See Changelog
-
-* Mon Oct  1 2007 Brian Aker <brian@tangent.org> - 0.3-1
-- Added memslap
-
-* Fri Sep 28 2007 Jeff Fisher <guppy@techmonkeys.org> - 0.2-1
-- Initial package

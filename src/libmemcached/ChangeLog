@@ -1,3 +1,44 @@
+0.31 Fri Jul 10 09:02:50 PDT 2009
+  * Added support or HA via replication.
+  * malloc() removed for server key usage.
+  * Update build system.
+  * Added support for memcached_set_memory_allocators().
+  * Fixed bug in configure.ac for have_htoll.
+
+0.30 Sun May 31 17:31:52 PDT 2009
+  * Added memcachd_dump command (and framework for memdump tool).
+  * Realigned all structures to remove padding (and line up important bits for 64bit caches.
+  * Remove some of sprintf() in storage calls().
+  * Removed printf() in stat call for unknown stat member.
+  * memcached_generate_hash() function added.
+  * Added tests to make sure all hash functions are stable.
+
+0.29 Tue May 19 08:26:48 PDT 2009
+  * Fixed malloc usage to calloc for spots where we need zero filled memory. 
+  * All code warnings now treated as errors.
+  * Fixes for debian packaging.
+  * Added new pooling mechanism.
+  * MEMCACHED_BEHAVIOR_NO_BLOCK no longer also sets MEMCACHED_BEHAVIOR_BUFFER_REQUESTS.
+  * Updated generic rpm.
+
+0.28 Tue Apr 14 18:56:28 PDT 2009
+  * Fixed bug in init sructure (reapplied)
+  * Fixed bug in get/set by key (nikkhils@gmail.com)
+
+0.27 Sun Mar 29 22:33:01 PDT 2009
+  * Added new UDP fire-forget mode.
+  * Reworked performance for mget() to better make use of async protocol
+  * Cleaned up execution of fetch (just one set of code now)
+  * Fixed Jenkin's for big endian hosts.
+  * Updates for memstat to determine network latency.
+  * Updates for binary protocol.
+  * Many updates to documentation.
+
+0.26 Thu Jan 29 13:05:50 PST 2009
+  * Fix for decrement on hash key
+  * Fixed assert that was catching bad memset() call in host_reset()
+  * Fix purge issue for blocked IO which has been stacked.
+
 0.25 Fri Nov 28 09:59:35 PST 2008
   * Jenkins HASH added.
   * Update of Murmur hash code

@@ -1,6 +1,8 @@
 /*
   Sample test application.
 */
+#include "libmemcached/common.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +13,6 @@
 #include <unistd.h>
 #include <time.h>
 #include "server.h"
-#include "../libmemcached/common.h"
 #include "../clients/generator.h"
 #include "../clients/execute.h"
 
@@ -72,8 +73,8 @@ infinite:
     uint32_t test_bit;
     uint8_t which;
 
-    test_bit= random() % GLOBAL_COUNT;
-    which= random() % 2;
+    test_bit= (uint32_t)(random() % GLOBAL_COUNT);
+    which= (uint8_t)(random() % 2);
 
     if (which == 0)
     {
@@ -172,7 +173,7 @@ static test_return add_test(memcached_st *memc)
 
   /* Too many broken OS'es have broken loopback in async, so we can't be sure of the result */
   if (setting_value)
-    assert(rc == MEMCACHED_NOTSTORED || MEMCACHED_STORED);
+    assert(rc == MEMCACHED_NOTSTORED || rc == MEMCACHED_STORED);
   else
     assert(rc == MEMCACHED_NOTSTORED);
 
@@ -186,7 +187,8 @@ static test_return add_test(memcached_st *memc)
 static test_return many_adds(memcached_st *memc)
 {
   unsigned int i;
-  for (i = 0; i < TEST_COUNTER; i++){
+  for (i = 0; i < TEST_COUNTER; i++)
+  {
     add_test(memc);
   }
   return 0;

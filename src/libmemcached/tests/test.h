@@ -3,10 +3,10 @@
 */
 #ifdef	__cplusplus
 extern "C" {
-
 #endif
+
 #include <libmemcached/memcached.h>
-#include "../libmemcached/common.h"
+#include <stdio.h>
 
 typedef struct world_st world_st;
 typedef struct collection_st collection_st;
@@ -20,13 +20,13 @@ typedef enum {
 } test_return;
 
 struct test_st {
-  char *name;
+  const char *name;
   unsigned int requires_flush;
   test_return (*function)(memcached_st *memc);
 };
 
 struct collection_st {
-  char *name;
+  const char *name;
   memcached_return (*pre)(memcached_st *memc);
   memcached_return (*post)(memcached_st *memc);
   test_st *tests;

@@ -7,29 +7,50 @@ memcached_server_st *memcached_server_create(memcached_st *memc, memcached_serve
 {
   if (ptr == NULL)
   {
-    ptr= (memcached_server_st *)malloc(sizeof(memcached_server_st));
+    ptr= (memcached_server_st *)calloc(1, sizeof(memcached_server_st));
 
     if (!ptr)
       return NULL; /*  MEMCACHED_MEMORY_ALLOCATION_FAILURE */
 
-    memset(ptr, 0, sizeof(memcached_server_st));
-    ptr->is_allocated= MEMCACHED_ALLOCATED;
+    ptr->is_allocated= true;
   }
   else
-  {
     memset(ptr, 0, sizeof(memcached_server_st));
-  }
   
   ptr->root= memc;
 
   return ptr;
 }
 
+memcached_server_st *memcached_server_create_with(memcached_st *memc, memcached_server_st *host, 
+                                                  const char *hostname, unsigned int port, 
+                                                  uint32_t weight, memcached_connection type)
+{
+  host= memcached_server_create(memc, host);
+
+  if (host == NULL)
+    return NULL;
+
+  strncpy(host->hostname, hostname, MEMCACHED_MAX_HOST_LENGTH - 1);
+  host->root= memc ? memc : NULL;
+  host->port= port;
+  host->weight= weight;
+  host->fd= -1;
+  host->type= type;
+  host->read_ptr= host->read_buffer;
+  if (memc)
+    host->next_retry= memc->retry_timeout;
+  if (type == MEMCACHED_CONNECTION_UDP)
+  {
+    host->write_buffer_offset= UDP_DATAGRAM_HEADER_LENGTH;
+    memcached_io_init_udp_header(host, 0);
+  }
+
+  return host;
+}
+
 void memcached_server_free(memcached_server_st *ptr)
 {
-  memcached_return rc;
-  WATCHPOINT_ASSERT(ptr->is_allocated != MEMCACHED_NOT_ALLOCATED);
-
   memcached_quit_server(ptr, 0);
 
   if (ptr->address_info)
@@ -38,15 +59,10 @@ void memcached_server_free(memcached_server_st *ptr)
     ptr->address_info= NULL;
   }
 
-  if (ptr->is_allocated == MEMCACHED_ALLOCATED)
-  {
-    if (ptr->root && ptr->root->call_free)
-      ptr->root->call_free(ptr->root, ptr);
-    else
-      free(ptr);
-  }
+  if (ptr->is_allocated)
+    ptr->root->call_free(ptr->root, ptr);
   else
-    ptr->is_allocated= MEMCACHED_USED;
+    memset(ptr, 0, sizeof(memcached_server_st));
 }
 
 /*
@@ -54,30 +70,14 @@ void memcached_server_free(memcached_server_st *ptr)
 */
 memcached_server_st *memcached_server_clone(memcached_server_st *clone, memcached_server_st *ptr)
 {
-  memcached_server_st *new_clone;
-
   /* We just do a normal create if ptr is missing */
   if (ptr == NULL)
     return NULL;
 
-  if (clone && clone->is_allocated == MEMCACHED_USED)
-  {
-    WATCHPOINT_ASSERT(0);
-    return NULL;
-  }
-  
-  new_clone= memcached_server_create(ptr->root, clone);
-  
-  if (new_clone == NULL)
-    return NULL;
-
-  new_clone->root= ptr->root;
-
-  host_reset(new_clone->root, new_clone, 
-             ptr->hostname, ptr->port, ptr->weight,
-             ptr->type);
-
-  return new_clone;
+  /* TODO We should check return type */
+  return memcached_server_create_with(ptr->root, clone, 
+                                      ptr->hostname, ptr->port, ptr->weight,
+                                      ptr->type);
 }
 
 memcached_return memcached_server_cursor(memcached_st *ptr, 
@@ -109,11 +109,10 @@ memcached_server_st *memcached_server_by_key(memcached_st *ptr,  const char *key
 {
   uint32_t server_key;
 
-  unlikely (key_length == 0)
-  {
-    *error= MEMCACHED_NO_KEY_PROVIDED;
+  *error= memcached_validate_key_length(key_length, 
+                                        ptr->flags & MEM_BINARY_PROTOCOL);
+  unlikely (*error != MEMCACHED_SUCCESS)
     return NULL;
-  }
 
   unlikely (ptr->number_of_hosts == 0)
   {
@@ -121,7 +120,7 @@ memcached_server_st *memcached_server_by_key(memcached_st *ptr,  const char *key
     return NULL;
   }
 
-  if ((ptr->flags & MEM_VERIFY_KEY) && (memcachd_key_test((char **)&key, &key_length, 1) == MEMCACHED_BAD_KEY_PROVIDED))
+  if ((ptr->flags & MEM_VERIFY_KEY) && (memcached_key_test((char **)&key, &key_length, 1) == MEMCACHED_BAD_KEY_PROVIDED))
   {
     *error= MEMCACHED_BAD_KEY_PROVIDED;
     return NULL;

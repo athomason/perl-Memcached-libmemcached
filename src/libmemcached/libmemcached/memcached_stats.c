@@ -30,33 +30,34 @@ static char *memcached_stat_keys[] = {
 };
 
 
-static void set_data(memcached_stat_st *stat, char *key, char *value)
+static memcached_return set_data(memcached_stat_st *memc_stat, char *key, char *value)
 {
 
   if(strlen(key) < 1) 
   {
-    fprintf(stderr, "Invalid key %s\n", key);
+    WATCHPOINT_STRING(key);
+    return MEMCACHED_UNKNOWN_STAT_KEY;
   }
   else if (!strcmp("pid", key))
   {
-    stat->pid= strtol(value, (char **)NULL, 10);
+    memc_stat->pid= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("uptime", key))
   {
-    stat->uptime= strtol(value, (char **)NULL, 10);
+    memc_stat->uptime= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("time", key))
   {
-    stat->time= strtol(value, (char **)NULL, 10);
+    memc_stat->time= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("version", key))
   {
-    memcpy(stat->version, value, strlen(value));
-    stat->version[strlen(value)]= 0;
+    memcpy(memc_stat->version, value, strlen(value));
+    memc_stat->version[strlen(value)]= 0;
   }
   else if (!strcmp("pointer_size", key))
   {
-    stat->pointer_size= strtol(value, (char **)NULL, 10);
+    memc_stat->pointer_size= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("rusage_user", key))
   {
@@ -64,8 +65,8 @@ static void set_data(memcached_stat_st *stat, char *key, char *value)
     for (walk_ptr= value; (!ispunct(*walk_ptr)); walk_ptr++);
     *walk_ptr= 0;
     walk_ptr++;
-    stat->rusage_user_seconds= strtol(value, (char **)NULL, 10);
-    stat->rusage_user_microseconds= strtol(walk_ptr, (char **)NULL, 10);
+    memc_stat->rusage_user_seconds= strtol(value, (char **)NULL, 10);
+    memc_stat->rusage_user_microseconds= strtol(walk_ptr, (char **)NULL, 10);
   }
   else if (!strcmp("rusage_system", key))
   {
@@ -73,77 +74,91 @@ static void set_data(memcached_stat_st *stat, char *key, char *value)
     for (walk_ptr= value; (!ispunct(*walk_ptr)); walk_ptr++);
     *walk_ptr= 0;
     walk_ptr++;
-    stat->rusage_system_seconds= strtol(value, (char **)NULL, 10);
-    stat->rusage_system_microseconds= strtol(walk_ptr, (char **)NULL, 10);
+    memc_stat->rusage_system_seconds= strtol(value, (char **)NULL, 10);
+    memc_stat->rusage_system_microseconds= strtol(walk_ptr, (char **)NULL, 10);
   }
   else if (!strcmp("curr_items", key))
   {
-    stat->curr_items= strtol(value, (char **)NULL, 10); 
+    memc_stat->curr_items= strtol(value, (char **)NULL, 10); 
   }
   else if (!strcmp("total_items", key))
   {
-    stat->total_items= strtol(value, (char **)NULL, 10);
+    memc_stat->total_items= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("bytes_read", key))
   {
-    stat->bytes_read= strtoll(value, (char **)NULL, 10);
+    memc_stat->bytes_read= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("bytes_written", key))
   {
-    stat->bytes_written= strtoll(value, (char **)NULL, 10);
+    memc_stat->bytes_written= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("bytes", key))
   {
-    stat->bytes= strtoll(value, (char **)NULL, 10);
+    memc_stat->bytes= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("curr_connections", key))
   {
-    stat->curr_connections= strtoll(value, (char **)NULL, 10);
+    memc_stat->curr_connections= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("total_connections", key))
   {
-    stat->total_connections= strtoll(value, (char **)NULL, 10);
+    memc_stat->total_connections= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("connection_structures", key))
   {
-    stat->connection_structures= strtol(value, (char **)NULL, 10);
+    memc_stat->connection_structures= strtol(value, (char **)NULL, 10);
   }
   else if (!strcmp("cmd_get", key))
   {
-    stat->cmd_get= strtoll(value, (char **)NULL, 10);
+    memc_stat->cmd_get= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("cmd_set", key))
   {
-    stat->cmd_set= strtoll(value, (char **)NULL, 10);
+    memc_stat->cmd_set= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("get_hits", key))
   {
-    stat->get_hits= strtoll(value, (char **)NULL, 10);
+    memc_stat->get_hits= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("get_misses", key))
   {
-    stat->get_misses= (uint64_t)strtoll(value, (char **)NULL, 10);
+    memc_stat->get_misses= (uint64_t)strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("evictions", key))
   {
-    stat->evictions= (uint64_t)strtoll(value, (char **)NULL, 10);
+    memc_stat->evictions= (uint64_t)strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("limit_maxbytes", key))
   {
-    stat->limit_maxbytes= strtoll(value, (char **)NULL, 10);
+    memc_stat->limit_maxbytes= strtoll(value, (char **)NULL, 10);
   }
   else if (!strcmp("threads", key))
   {
-    stat->threads= strtol(value, (char **)NULL, 10);
+    memc_stat->threads= strtol(value, (char **)NULL, 10);
   }
-  else
+  else if (!(strcmp("delete_misses", key) == 0 ||/* New stats in the 1.3 beta */
+             strcmp("delete_hits", key) == 0 ||/* Just swallow them for now.. */
+             strcmp("incr_misses", key) == 0 ||
+             strcmp("incr_hits", key) == 0 ||
+             strcmp("decr_misses", key) == 0 ||
+             strcmp("decr_hits", key) == 0 ||
+             strcmp("cas_misses", key) == 0 ||
+             strcmp("cas_hits", key) == 0 ||
+             strcmp("cas_badval", key) == 0 ||
+             strcmp("cmd_flush", key) == 0 ||
+             strcmp("accepting_conns", key) == 0 ||
+             strcmp("listen_disabled_num", key) == 0))
   {
-    fprintf(stderr, "Unknown key %s\n", key);
+    WATCHPOINT_STRING(key);
+    return MEMCACHED_UNKNOWN_STAT_KEY;
   }
+
+  return MEMCACHED_SUCCESS;
 }
 
-char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *stat, 
-                               char *key, memcached_return *error)
+char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *memc_stat, 
+                               const char *key, memcached_return *error)
 {
   char buffer[SMALL_STRING_LEN];
   size_t length;
@@ -152,59 +167,56 @@ char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *stat,
   *error= MEMCACHED_SUCCESS;
 
   if (!memcmp("pid", key, strlen("pid")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->pid);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->pid);
   else if (!memcmp("uptime", key, strlen("uptime")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->uptime);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->uptime);
   else if (!memcmp("time", key, strlen("time")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->time);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->time);
   else if (!memcmp("version", key, strlen("version")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%s", stat->version);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%s", memc_stat->version);
   else if (!memcmp("pointer_size", key, strlen("pointer_size")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->pointer_size);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->pointer_size);
   else if (!memcmp("rusage_user", key, strlen("rusage_user")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u.%u", stat->rusage_user_seconds, stat->rusage_user_microseconds);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u.%u", memc_stat->rusage_user_seconds, memc_stat->rusage_user_microseconds);
   else if (!memcmp("rusage_system", key, strlen("rusage_system")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u.%u", stat->rusage_system_seconds, stat->rusage_system_microseconds);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u.%u", memc_stat->rusage_system_seconds, memc_stat->rusage_system_microseconds);
   else if (!memcmp("curr_items", key, strlen("curr_items")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->curr_items);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->curr_items);
   else if (!memcmp("total_items", key, strlen("total_items")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->total_items);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->total_items);
   else if (!memcmp("bytes", key, strlen("bytes")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->bytes);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->bytes);
   else if (!memcmp("curr_connections", key, strlen("curr_connections")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->curr_connections);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->curr_connections);
   else if (!memcmp("total_connections", key, strlen("total_connections")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->total_connections);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->total_connections);
   else if (!memcmp("connection_structures", key, strlen("connection_structures")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->connection_structures);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->connection_structures);
   else if (!memcmp("cmd_get", key, strlen("cmd_get")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->cmd_get);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->cmd_get);
   else if (!memcmp("cmd_set", key, strlen("cmd_set")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->cmd_set);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->cmd_set);
   else if (!memcmp("get_hits", key, strlen("get_hits")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->get_hits);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->get_hits);
   else if (!memcmp("get_misses", key, strlen("get_misses")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->get_misses);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->get_misses);
   else if (!memcmp("evictions", key, strlen("evictions")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->evictions);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->evictions);
   else if (!memcmp("bytes_read", key, strlen("bytes_read")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->bytes_read);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->bytes_read);
   else if (!memcmp("bytes_written", key, strlen("bytes_written")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->bytes_written);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->bytes_written);
   else if (!memcmp("limit_maxbytes", key, strlen("limit_maxbytes")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)stat->limit_maxbytes);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%llu", (unsigned long long)memc_stat->limit_maxbytes);
   else if (!memcmp("threads", key, strlen("threads")))
-    length= snprintf(buffer, SMALL_STRING_LEN,"%u", stat->threads);
+    length= snprintf(buffer, SMALL_STRING_LEN,"%u", memc_stat->threads);
   else
   {
     *error= MEMCACHED_NOTFOUND;
     return NULL;
   }
 
-  if (ptr->call_malloc)
-    ret= ptr->call_malloc(ptr, length + 1);
-  else
-    ret= malloc(length + 1);
+  ret= ptr->call_malloc(ptr, length + 1);
   memcpy(ret, buffer, length);
   ret[length]= '\0';
 
@@ -212,7 +224,7 @@ char *memcached_stat_get_value(memcached_st *ptr, memcached_stat_st *stat,
 }
 
 static memcached_return binary_stats_fetch(memcached_st *ptr,
-                                           memcached_stat_st *stat,
+                                           memcached_stat_st *memc_stat,
                                            char *args,
                                            unsigned int server_key)
 {
@@ -227,6 +239,11 @@ static memcached_return binary_stats_fetch(memcached_st *ptr,
   if (args != NULL) 
   {
     int len= strlen(args);
+
+    rc= memcached_validate_key_length(len, true);
+    unlikely (rc != MEMCACHED_SUCCESS)
+      return rc;
+
     request.message.header.request.keylen= htons((uint16_t)len);
     request.message.header.request.bodylen= htonl(len);
       
@@ -262,7 +279,11 @@ static memcached_return binary_stats_fetch(memcached_st *ptr,
         return rc;
      }
      
-     set_data(stat, buffer, buffer + strlen(buffer) + 1);
+     unlikely((set_data(memc_stat, buffer, buffer + strlen(buffer) + 1)) == MEMCACHED_UNKNOWN_STAT_KEY)
+     {
+       WATCHPOINT_ERROR(MEMCACHED_UNKNOWN_STAT_KEY);
+       WATCHPOINT_ASSERT(0);
+     }
   } while (1);
   
   /* shit... memcached_response will decrement the counter, so I need to
@@ -274,7 +295,7 @@ static memcached_return binary_stats_fetch(memcached_st *ptr,
 }
 
 static memcached_return ascii_stats_fetch(memcached_st *ptr,
-                                              memcached_stat_st *stat,
+                                              memcached_stat_st *memc_stat,
                                               char *args,
                                               unsigned int server_key)
 {
@@ -316,7 +337,11 @@ static memcached_return ascii_stats_fetch(memcached_st *ptr,
       value= string_ptr;
       value[(size_t)(end_ptr-string_ptr)]= 0;
       string_ptr= end_ptr + 2;
-      set_data(stat, key, value);
+      unlikely((set_data(memc_stat, key, value)) == MEMCACHED_UNKNOWN_STAT_KEY)
+      {
+        WATCHPOINT_ERROR(MEMCACHED_UNKNOWN_STAT_KEY);
+        WATCHPOINT_ASSERT(0);
+      }
     }
     else
       break;
@@ -335,22 +360,19 @@ memcached_stat_st *memcached_stat(memcached_st *ptr, char *args, memcached_retur
   memcached_return rc;
   memcached_stat_st *stats;
 
-  if (ptr->call_malloc)
-    stats= (memcached_stat_st *)ptr->call_malloc(ptr, sizeof(memcached_stat_st)*(ptr->number_of_hosts));
-  else
-    stats= (memcached_stat_st *)malloc(sizeof(memcached_stat_st)*(ptr->number_of_hosts));
+  unlikely (ptr->flags & MEM_USE_UDP)
+  {
+    *error= MEMCACHED_NOT_SUPPORTED;
+    return NULL;
+  }
+
+  stats= ptr->call_calloc(ptr, ptr->number_of_hosts, sizeof(memcached_stat_st));
 
   if (!stats)
   {
     *error= MEMCACHED_MEMORY_ALLOCATION_FAILURE;
-    if (ptr->call_free)
-      ptr->call_free(ptr, stats);
-    else
-      free(stats);
-
     return NULL;
   }
-  memset(stats, 0, sizeof(memcached_stat_st)*(ptr->number_of_hosts));
 
   rc= MEMCACHED_SUCCESS;
   for (x= 0; x < ptr->number_of_hosts; x++)
@@ -370,7 +392,7 @@ memcached_stat_st *memcached_stat(memcached_st *ptr, char *args, memcached_retur
   return stats;
 }
 
-memcached_return memcached_stat_servername(memcached_stat_st *stat, char *args, 
+memcached_return memcached_stat_servername(memcached_stat_st *memc_stat, char *args, 
                                            char *hostname, unsigned int port)
 {
   memcached_return rc;
@@ -381,9 +403,9 @@ memcached_return memcached_stat_servername(memcached_stat_st *stat, char *args,
   memcached_server_add(&memc, hostname, port);
 
   if (memc.flags & MEM_BINARY_PROTOCOL)
-    rc= binary_stats_fetch(&memc, stat, args, 0);
+    rc= binary_stats_fetch(&memc, memc_stat, args, 0);
   else
-    rc= ascii_stats_fetch(&memc, stat, args, 0);
+    rc= ascii_stats_fetch(&memc, memc_stat, args, 0);
 
   memcached_free(&memc);
 
@@ -394,23 +416,20 @@ memcached_return memcached_stat_servername(memcached_stat_st *stat, char *args,
   We make a copy of the keys since at some point in the not so distant future
   we will add support for "found" keys.
 */
-char ** memcached_stat_get_keys(memcached_st *ptr, memcached_stat_st *stat __attribute__((unused)), 
+char ** memcached_stat_get_keys(memcached_st *ptr, memcached_stat_st *memc_stat, 
                                 memcached_return *error)
 {
+  (void) memc_stat;
   char **list;
   size_t length= sizeof(memcached_stat_keys);
 
-  if (ptr->call_malloc)
-    list= (char **)ptr->call_malloc(ptr, length);
-  else
-    list= (char **)malloc(length);
+  list= ptr->call_malloc(ptr, length);
 
   if (!list)
   {
     *error= MEMCACHED_MEMORY_ALLOCATION_FAILURE;
     return NULL;
   }
-  memset(list, 0, sizeof(memcached_stat_keys));
 
   memcpy(list, memcached_stat_keys, sizeof(memcached_stat_keys));
 
@@ -419,16 +438,16 @@ char ** memcached_stat_get_keys(memcached_st *ptr, memcached_stat_st *stat __att
   return list;
 }
 
-void memcached_stat_free(memcached_st *ptr, memcached_stat_st *stat)
+void memcached_stat_free(memcached_st *ptr, memcached_stat_st *memc_stat)
 {
-  if (stat == NULL)
+  if (memc_stat == NULL)
   {
     WATCHPOINT_ASSERT(0); /* Be polite, but when debugging catch this as an error */
     return;
   }
 
-  if (ptr && ptr->call_free)
-    ptr->call_free(ptr, stat);
+  if (ptr)
+    ptr->call_free(ptr, memc_stat);
   else
-    free(stat);
+    free(memc_stat);
 }

@@ -35,19 +35,37 @@ host_triplet = @host@
 target_triplet = @target@
 subdir = support
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/libmemcached.pc.in $(srcdir)/libmemcached.spec.in
+	$(srcdir)/libmemcached-fc.spec.in $(srcdir)/libmemcached.pc.in \
+	$(srcdir)/libmemcached.spec.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/config/pod2man.m4 \
-	$(top_srcdir)/config/debug.m4 $(top_srcdir)/config/dtrace.m4 \
-	$(top_srcdir)/config/byteorder.m4 \
-	$(top_srcdir)/config/64bit.m4 \
-	$(top_srcdir)/config/protocol_binary.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
+	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
+	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
+	$(top_srcdir)/m4/deprecated.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 \
+	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/memcached.m4 \
+	$(top_srcdir)/m4/pandora_64bit.m4 \
+	$(top_srcdir)/m4/pandora_canonical.m4 \
+	$(top_srcdir)/m4/pandora_check_compiler_version.m4 \
+	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
+	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
+	$(top_srcdir)/m4/pandora_header_assert.m4 \
+	$(top_srcdir)/m4/pandora_libtool.m4 \
+	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_vc_build.m4 \
+	$(top_srcdir)/m4/pandora_warnings.m4 \
+	$(top_srcdir)/m4/pod2man.m4 \
+	$(top_srcdir)/m4/protocol_binary.m4 \
+	$(top_srcdir)/m4/setsockopt.m4 $(top_srcdir)/m4/visibility.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/libmemcached/libmemcached_config.h
-CONFIG_CLEAN_FILES = libmemcached.pc libmemcached.spec
+CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_CLEAN_FILES = libmemcached.pc libmemcached.spec \
+	libmemcached-fc.spec
 SOURCES =
 DIST_SOURCES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -62,6 +80,9 @@ DATA = $(pkgconfig_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_CFLAGS = @AM_CFLAGS@
+AM_CPPFLAGS = @AM_CPPFLAGS@
+AM_CXXFLAGS = @AM_CXXFLAGS@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -69,18 +90,22 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_VERSION = @CC_VERSION@
 CFLAGS = @CFLAGS@
+CFLAG_VISIBILITY = @CFLAG_VISIBILITY@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
+CXX_VERSION = @CXX_VERSION@
 CYGPATH_W = @CYGPATH_W@
-DEBUG = @DEBUG@
-DEBUGFLAGS = @DEBUGFLAGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DEPRECATED = @DEPRECATED@
+DOXYGEN = @DOXYGEN@
+DSYMUTIL = @DSYMUTIL@
 DTRACE = @DTRACE@
 DTRACEFLAGS = @DTRACEFLAGS@
 ECHO = @ECHO@
@@ -92,26 +117,34 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 GREP = @GREP@
-HAVE_DEBUG = @HAVE_DEBUG@
-HAVE_DTRACE = @HAVE_DTRACE@
+HAVE_VISIBILITY = @HAVE_VISIBILITY@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+ISAINFO = @ISAINFO@
 LDFLAGS = @LDFLAGS@
+LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
+LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
+LIBC_P = @LIBC_P@
+LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MEMCACHED_API_VERSION = @MEMCACHED_API_VERSION@
-MEMCACHED_LIBRARY_NAME = @MEMCACHED_LIBRARY_NAME@
+MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
-MEMCACHED_RELEASE = @MEMCACHED_RELEASE@
-MEMCACHED_VERSION = @MEMCACHED_VERSION@
+MEMC_BINARY = @MEMC_BINARY@
 MKDIR_P = @MKDIR_P@
+NMEDIT = @NMEDIT@
+NO_CONVERSION = @NO_CONVERSION@
+NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
+NO_SHADOW = @NO_SHADOW@
+NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
+NO_UNREACHED = @NO_UNREACHED@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -120,7 +153,12 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL = @PERL@
 POD2MAN = @POD2MAN@
+PROTOSKIP_WARNINGS = @PROTOSKIP_WARNINGS@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -134,6 +172,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
+acx_pthread_config = @acx_pthread_config@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -180,9 +219,10 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = libmemcached.spec set_benchmark.sh
+EXTRA_DIST = libmemcached.spec set_benchmark.sh libmemcached-fc.spec.in
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libmemcached.pc
 all: all-am
@@ -220,6 +260,8 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 libmemcached.pc: $(top_builddir)/config.status $(srcdir)/libmemcached.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 libmemcached.spec: $(top_builddir)/config.status $(srcdir)/libmemcached.spec.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+libmemcached-fc.spec: $(top_builddir)/config.status $(srcdir)/libmemcached-fc.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:

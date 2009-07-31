@@ -1,3 +1,4 @@
+#include "libmemcached/common.h"
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
@@ -51,7 +52,8 @@ int main(int argc, char *argv[])
 
   memcached_server_push(memc, servers);
   memcached_server_list_free(servers);
-  memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, opt_binary);
+  memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL,
+                         (uint64_t)opt_binary);
 
   while (optind < argc) 
   {

@@ -51,6 +51,7 @@ static memcached_return set_socket_options(memcached_server_st *ptr)
   if (ptr->type == MEMCACHED_CONNECTION_UDP)
     return MEMCACHED_SUCCESS;
 
+#ifdef HAVE_SNDTIMEO
   if (ptr->root->snd_timeout)
   {
     int error;
@@ -63,7 +64,9 @@ static memcached_return set_socket_options(memcached_server_st *ptr)
                       &waittime, (socklen_t)sizeof(struct timeval));
     WATCHPOINT_ASSERT(error == 0);
   }
+#endif
 
+#ifdef HAVE_RCVTIMEO
   if (ptr->root->rcv_timeout)
   {
     int error;
@@ -76,6 +79,7 @@ static memcached_return set_socket_options(memcached_server_st *ptr)
                       &waittime, (socklen_t)sizeof(struct timeval));
     WATCHPOINT_ASSERT(error == 0);
   }
+#endif
 
   {
     int error;
@@ -111,13 +115,13 @@ static memcached_return set_socket_options(memcached_server_st *ptr)
   {
     int error;
 
-    error= setsockopt(ptr->fd, SOL_SOCKET, SO_SNDBUF, 
+    error= setsockopt(ptr->fd, SOL_SOCKET, SO_RCVBUF, 
                       &ptr->root->recv_size, (socklen_t)sizeof(int));
     WATCHPOINT_ASSERT(error == 0);
   }
 
   /* For the moment, not getting a nonblocking mode will not be fatal */
-  if (ptr->root->flags & MEM_NO_BLOCK)
+  if ((ptr->root->flags & MEM_NO_BLOCK) || ptr->root->connect_timeout)
   {
     int flags;
 
@@ -155,7 +159,8 @@ test_connect:
                 (struct sockaddr *)&servAddr,
                 sizeof(servAddr)) < 0)
     {
-      switch (errno) {
+      switch (errno)
+      {
       case EINPROGRESS:
       case EALREADY:
       case EINTR:
@@ -180,16 +185,7 @@ static memcached_return network_connect(memcached_server_st *ptr)
   {
     struct addrinfo *use;
 
-    if (ptr->root->server_failure_limit != 0) 
-    {
-      if (ptr->server_failure_counter >= ptr->root->server_failure_limit) 
-      {
-          memcached_server_remove(ptr);
-          return MEMCACHED_FAILURE;
-      }
-    }
-
-    if (ptr->sockaddr_inited == MEMCACHED_NOT_ALLOCATED || 
+    if (!ptr->sockaddr_inited ||
         (!(ptr->root->flags & MEM_USE_CACHE_LOOKUPS)))
     {
       memcached_return rc;
@@ -197,13 +193,20 @@ static memcached_return network_connect(memcached_server_st *ptr)
       rc= set_hostinfo(ptr);
       if (rc != MEMCACHED_SUCCESS)
         return rc;
-      ptr->sockaddr_inited= MEMCACHED_ALLOCATED;
+      ptr->sockaddr_inited= true;
     }
 
     use= ptr->address_info;
     /* Create the socket */
     while (use != NULL)
     {
+      /* Memcache server does not support IPV6 in udp mode, so skip if not ipv4 */
+      if (ptr->type == MEMCACHED_CONNECTION_UDP && use->ai_family != AF_INET)
+      {
+        use= use->ai_next;
+        continue;
+      }
+
       if ((ptr->fd= socket(use->ai_family, 
                            use->ai_socktype, 
                            use->ai_protocol)) < 0)
@@ -215,71 +218,59 @@ static memcached_return network_connect(memcached_server_st *ptr)
 
       (void)set_socket_options(ptr);
 
-      /* connect to server */
-test_connect:
-      if (connect(ptr->fd, 
-                  use->ai_addr, 
-                  use->ai_addrlen) < 0)
+      int flags= 0;
+      if (ptr->root->connect_timeout)
       {
-        switch (errno) {
-          /* We are spinning waiting on connect */
-        case EALREADY:
-        case EINPROGRESS:
-          {
-            struct pollfd fds[1];
-            int error;
-
-            memset(&fds, 0, sizeof(struct pollfd));
-            fds[0].fd= ptr->fd;
-            fds[0].events= POLLOUT |  POLLERR;
-            error= poll(fds, 1, ptr->root->connect_timeout);
-
-            if (error == 0) 
-            {
-              goto handle_retry;
-            }
-            else if (error != 1 && fds[0].revents & POLLERR)
-            {
-              ptr->cached_errno= errno;
-              WATCHPOINT_ERRNO(ptr->cached_errno);
-              WATCHPOINT_NUMBER(ptr->root->connect_timeout);
-              memcached_quit_server(ptr, 1);
-
-              if (ptr->root->retry_timeout)
-              {
-                struct timeval next_time;
-
-                gettimeofday(&next_time, NULL);
-                ptr->next_retry= next_time.tv_sec + ptr->root->retry_timeout;
-              }
-              ptr->server_failure_counter+= 1;
-
-              return MEMCACHED_ERRNO;
-            }
-
-            break;
-          }
-        /* We are spinning waiting on connect */
-        case EINTR:
-          goto test_connect;
-        case EISCONN: /* We were spinning waiting on connect */
-          break;
-        default:
-handle_retry:
-          ptr->cached_errno= errno;
-          close(ptr->fd);
-          ptr->fd= -1;
-          if (ptr->root->retry_timeout)
-          {
-            struct timeval next_time;
-
-            gettimeofday(&next_time, NULL);
-            ptr->next_retry= next_time.tv_sec + ptr->root->retry_timeout;
-          }
-        }
+        flags= fcntl(ptr->fd, F_GETFL, 0);
+        if (flags != -1 && !(flags & O_NONBLOCK))
+          (void)fcntl(ptr->fd, F_SETFL, flags | O_NONBLOCK);
       }
-      else
+
+      /* connect to server */
+      while (ptr->fd != -1 && 
+             connect(ptr->fd, use->ai_addr, use->ai_addrlen) < 0)
       {
+        ptr->cached_errno= errno;
+        if (errno == EINPROGRESS || /* nonblocking mode - first return, */
+            errno == EALREADY) /* nonblocking mode - subsequent returns */
+        {
+          struct pollfd fds[1];
+          fds[0].fd = ptr->fd;
+          fds[0].events = POLLOUT;
+          int error= poll(fds, 1, ptr->root->connect_timeout);
+
+          if (error != 1 || fds[0].revents & POLLERR)
+          {
+            if (fds[0].revents & POLLERR)
+            {
+              int err;
+              socklen_t len = sizeof (err);
+              (void)getsockopt(ptr->fd, SOL_SOCKET, SO_ERROR, &err, &len);
+              ptr->cached_errno= (err == 0) ? errno : err;
+            }
+
+            (void)close(ptr->fd);
+            ptr->fd= -1;
+          }
+        } 
+        else if (errno == EISCONN) /* we are connected :-) */
+        {
+          break;
+        } 
+        else if (errno != EINTR)
+        {
+          (void)close(ptr->fd);
+          ptr->fd= -1;
+          break;
+        } 
+      }
+
+      if (ptr->fd != -1)
+      {
+        /* restore flags */ 
+        if (ptr->root->connect_timeout && (ptr->root->flags & MEM_NO_BLOCK) == 0) 
+          (void)fcntl(ptr->fd, F_SETFL, flags & ~O_NONBLOCK);
+
         WATCHPOINT_ASSERT(ptr->cursor_active == 0);
         ptr->server_failure_counter= 0;
         return MEMCACHED_SUCCESS;
@@ -288,8 +279,19 @@ handle_retry:
     }
   }
 
-  if (ptr->fd == -1) {
+  if (ptr->fd == -1)
+  {
+    /* Failed to connect. schedule next retry */
+    if (ptr->root->retry_timeout)
+    {
+      struct timeval next_time;
+
+      if (gettimeofday(&next_time, NULL) == 0)
+        ptr->next_retry= next_time.tv_sec + ptr->root->retry_timeout;
+    }
     ptr->server_failure_counter+= 1;
+    if (ptr->cached_errno == 0)
+      return MEMCACHED_TIMEOUT;
     return MEMCACHED_ERRNO; /* The last error should be from connect() */
   }
 
@@ -303,14 +305,30 @@ memcached_return memcached_connect(memcached_server_st *ptr)
   memcached_return rc= MEMCACHED_NO_SERVERS;
   LIBMEMCACHED_MEMCACHED_CONNECT_START();
 
-  if (ptr->root->retry_timeout)
+  /* both retry_timeout and server_failure_limit must be set in order to delay retrying a server on error. */
+  WATCHPOINT_ASSERT(ptr->root);
+  if (ptr->root->retry_timeout && ptr->root->server_failure_limit)
   {
     struct timeval next_time;
 
     gettimeofday(&next_time, NULL);
+
+    /* if we've had too many consecutive errors on this server, mark it dead. */
+    if (ptr->server_failure_counter > ptr->root->server_failure_limit)
+    {
+      ptr->next_retry= next_time.tv_sec + ptr->root->retry_timeout;
+      ptr->server_failure_counter= 0;
+    }
+
     if (next_time.tv_sec < ptr->next_retry)
-      return MEMCACHED_TIMEOUT;
+    {
+      if (memcached_behavior_get(ptr->root, MEMCACHED_BEHAVIOR_AUTO_EJECT_HOSTS))
+        run_distribution(ptr->root);
+
+      return MEMCACHED_SERVER_MARKED_DEAD;
+    }
   }
+
   /* We need to clean up the multi startup piece */
   switch (ptr->type)
   {

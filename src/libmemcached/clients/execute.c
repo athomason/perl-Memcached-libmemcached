@@ -3,7 +3,8 @@
   Return the number of rows set.
 */
 
-#include <stdio.h>
+#include "libmemcached/common.h"
+
 #include "execute.h"
 
 unsigned int execute_set(memcached_st *memc, pairs_st *pairs, unsigned int number_of)
@@ -45,7 +46,7 @@ unsigned int execute_get(memcached_st *memc, pairs_st *pairs, unsigned int numbe
     uint32_t flags;
     unsigned int fetch_key;
 
-    fetch_key= random() % number_of;
+    fetch_key= (unsigned int)(random() % number_of);
 
     value= memcached_get(memc, pairs[fetch_key].key, pairs[fetch_key].key_length,
                          &value_length, &flags, &rc);

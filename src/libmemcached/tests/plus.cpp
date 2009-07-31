@@ -1,8 +1,9 @@
 /*
   C++ interface test
 */
+#include "libmemcached/memcached.hh"
+
 #include <assert.h>
-#include <memcached.hh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,10 +16,18 @@
 
 #include "test.h"
 
+extern "C" {
+   test_return basic_test(memcached_st *memc);
+   uint8_t increment_test(memcached_st *memc);
+   test_return basic_master_key_test(memcached_st *memc);
+   void *world_create(void);
+   void world_destroy(void *p);
+}
+
 test_return basic_test(memcached_st *memc)
 {
-  Memcached foo;
-  char *value_set= "This is some data";
+  Memcached foo(memc);
+  const char *value_set= "This is some data";
   char *value;
   size_t value_length;
 
@@ -32,10 +41,10 @@ test_return basic_test(memcached_st *memc)
 
 uint8_t increment_test(memcached_st *memc)
 {
-  Memcached mcach;
+  Memcached mcach(memc);
   memcached_return rc;
-  char *key= "inctest";
-  char *inc_value= "1";
+  const char *key= "inctest";
+  const char *inc_value= "1";
   char *ret_value;
   uint64_t int_inc_value;
   uint64_t int_ret_value;
@@ -44,8 +53,8 @@ uint8_t increment_test(memcached_st *memc)
   mcach.set(key, inc_value, strlen(inc_value));
   ret_value= mcach.get(key, &value_length);
   printf("\nretvalue %s\n",ret_value);
-  int_inc_value= atoi(inc_value);
-  int_ret_value= atoi(ret_value);
+  int_inc_value= uint64_t(atol(inc_value));
+  int_ret_value= uint64_t(atol(ret_value));
   assert(int_ret_value == int_inc_value); 
 
   rc= mcach.increment(key, 1, &int_ret_value);
@@ -65,11 +74,11 @@ uint8_t increment_test(memcached_st *memc)
 
 test_return basic_master_key_test(memcached_st *memc)
 {
-  Memcached foo;
-  char *value_set= "Data for server A";
-  char *master_key_a= "server-a";
-  char *master_key_b= "server-b";
-  char *key= "xyz";
+   Memcached foo(memc);
+  const char *value_set= "Data for server A";
+  const char *master_key_a= "server-a";
+  const char *master_key_b= "server-b";
+  const char *key= "xyz";
   char *value;
   size_t value_length;
 
@@ -98,10 +107,8 @@ collection_st collection[] ={
 
 #define SERVERS_TO_CREATE 1
 
-void *world_create(void)
+extern "C" void *world_create(void)
 {
-  unsigned int x;
-  memcached_server_st *servers;
   server_startup_st *construct;
 
   construct= (server_startup_st *)malloc(sizeof(server_startup_st));
@@ -115,8 +122,9 @@ void *world_create(void)
 
 void world_destroy(void *p)
 {
-  server_startup_st *construct= (server_startup_st *)p;
-  memcached_server_st *servers= (memcached_server_st *)construct->servers;
+  server_startup_st *construct= static_cast<server_startup_st *>(p);
+  memcached_server_st *servers=
+    static_cast<memcached_server_st *>(construct->servers);
   memcached_server_list_free(servers);
 
   server_shutdown(construct);

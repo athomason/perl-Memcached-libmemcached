@@ -9,6 +9,7 @@ typedef enum {
   OPT_HELP= 'h',
   OPT_VERBOSE= 'v',
   OPT_DEBUG= 'd',
+  OPT_ANALYZE= 'a',
   OPT_FLAG= 257,
   OPT_EXPIRE,
   OPT_SET,
@@ -23,6 +24,7 @@ typedef enum {
   OPT_FLUSH,
   OPT_HASH,
   OPT_BINARY,
+  OPT_UDP
 } memcached_options;
 
 #endif /* CLIENT_OPTIONS */

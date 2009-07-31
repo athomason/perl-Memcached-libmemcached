@@ -1,6 +1,6 @@
 =head1 NAME
 
-memcached_get, memcached_mget, memcached_fetch
+memcached_get, memcached_mget, memcached_fetch - Get a value
 
 =head1 LIBRARY
 
@@ -103,6 +103,12 @@ memcached_get_by_key() and memcached_mget_by_key() behave in a similar nature
 as memcached_get() and memcached_mget(). The difference is that they take
 a master key that is used for determining which server an object was stored
 if key partitioning was used for storage.
+
+All of the above functions are not supported when the C<MEMCACHED_BEHAVIOR_USE_UDP>
+has been set. Executing any of these functions with this behavior on will result in 
+C<MEMCACHED_NOT_SUPPORTED> being returned or, for those functions which do not return
+a C<memcached_return>, the error function parameter will be set to 
+C<MEMCACHED_NOT_SUPPORTED>.
 
 =head1 RETURN
 

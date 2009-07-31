@@ -15,6 +15,7 @@
 @SET_MAKE@
 
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
@@ -34,42 +35,69 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = $(top_builddir)/libmemcachedutil/libmemcachedutil.la
 noinst_PROGRAMS = testapp$(EXEEXT) testplus$(EXEEXT) udptest$(EXEEXT) \
 	atomsmasher$(EXEEXT) startservers$(EXEEXT)
 subdir = tests
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/config/pod2man.m4 \
-	$(top_srcdir)/config/debug.m4 $(top_srcdir)/config/dtrace.m4 \
-	$(top_srcdir)/config/byteorder.m4 \
-	$(top_srcdir)/config/64bit.m4 \
-	$(top_srcdir)/config/protocol_binary.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
+	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
+	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
+	$(top_srcdir)/m4/deprecated.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 \
+	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/memcached.m4 \
+	$(top_srcdir)/m4/pandora_64bit.m4 \
+	$(top_srcdir)/m4/pandora_canonical.m4 \
+	$(top_srcdir)/m4/pandora_check_compiler_version.m4 \
+	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
+	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
+	$(top_srcdir)/m4/pandora_header_assert.m4 \
+	$(top_srcdir)/m4/pandora_libtool.m4 \
+	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_vc_build.m4 \
+	$(top_srcdir)/m4/pandora_warnings.m4 \
+	$(top_srcdir)/m4/pod2man.m4 \
+	$(top_srcdir)/m4/protocol_binary.m4 \
+	$(top_srcdir)/m4/setsockopt.m4 $(top_srcdir)/m4/visibility.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/libmemcached/libmemcached_config.h
+CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+libserver_la_LIBADD =
+am_libserver_la_OBJECTS = server.lo
+libserver_la_OBJECTS = $(am_libserver_la_OBJECTS)
+libtest_la_LIBADD =
+am_libtest_la_OBJECTS = test.lo
+libtest_la_OBJECTS = $(am_libtest_la_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
-am_atomsmasher_OBJECTS = test.$(OBJEXT) atomsmasher.$(OBJEXT) \
-	server.$(OBJEXT) generator.$(OBJEXT) execute.$(OBJEXT)
+am_atomsmasher_OBJECTS = atomsmasher.$(OBJEXT)
 atomsmasher_OBJECTS = $(am_atomsmasher_OBJECTS)
-atomsmasher_DEPENDENCIES = $(LDADDS)
-am_startservers_OBJECTS = start.$(OBJEXT) server.$(OBJEXT)
+atomsmasher_DEPENDENCIES = $(LDADDS) \
+	$(top_builddir)/clients/libgenexec.la libtest.la libserver.la
+am_startservers_OBJECTS = start.$(OBJEXT)
 startservers_OBJECTS = $(am_startservers_OBJECTS)
-startservers_DEPENDENCIES = $(LDADDS)
-am_testapp_OBJECTS = test.$(OBJEXT) function.$(OBJEXT) \
-	server.$(OBJEXT) generator.$(OBJEXT) execute.$(OBJEXT)
+startservers_DEPENDENCIES = $(LDADDS) libserver.la
+am_testapp_OBJECTS = testapp-function.$(OBJEXT)
 testapp_OBJECTS = $(am_testapp_OBJECTS)
-testapp_DEPENDENCIES = $(LDADDS)
-am_testplus_OBJECTS = test.$(OBJEXT) plus.$(OBJEXT) server.$(OBJEXT)
+testapp_DEPENDENCIES = $(LDADDS) $(top_builddir)/clients/libgenexec.la \
+	libtest.la libserver.la
+testapp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(testapp_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am_testplus_OBJECTS = plus.$(OBJEXT)
 testplus_OBJECTS = $(am_testplus_OBJECTS)
-testplus_DEPENDENCIES = $(LDADDS)
-am_udptest_OBJECTS = test.$(OBJEXT) udp.$(OBJEXT) server.$(OBJEXT)
+testplus_DEPENDENCIES = $(LDADDS) libtest.la libserver.la
+am_udptest_OBJECTS = udp.$(OBJEXT)
 udptest_OBJECTS = $(am_udptest_OBJECTS)
-udptest_DEPENDENCIES = $(LDADDS)
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/libmemcached
+udptest_DEPENDENCIES = $(LDADDS) libtest.la libserver.la
+DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -90,9 +118,11 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(atomsmasher_SOURCES) $(startservers_SOURCES) \
+SOURCES = $(libserver_la_SOURCES) $(libtest_la_SOURCES) \
+	$(atomsmasher_SOURCES) $(startservers_SOURCES) \
 	$(testapp_SOURCES) $(testplus_SOURCES) $(udptest_SOURCES)
-DIST_SOURCES = $(atomsmasher_SOURCES) $(startservers_SOURCES) \
+DIST_SOURCES = $(libserver_la_SOURCES) $(libtest_la_SOURCES) \
+	$(atomsmasher_SOURCES) $(startservers_SOURCES) \
 	$(testapp_SOURCES) $(testplus_SOURCES) $(udptest_SOURCES)
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
@@ -100,6 +130,9 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_CFLAGS = @AM_CFLAGS@
+AM_CPPFLAGS = @AM_CPPFLAGS@
+AM_CXXFLAGS = @AM_CXXFLAGS@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -107,18 +140,22 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_VERSION = @CC_VERSION@
 CFLAGS = @CFLAGS@
+CFLAG_VISIBILITY = @CFLAG_VISIBILITY@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
+CXX_VERSION = @CXX_VERSION@
 CYGPATH_W = @CYGPATH_W@
-DEBUG = @DEBUG@
-DEBUGFLAGS = @DEBUGFLAGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DEPRECATED = @DEPRECATED@
+DOXYGEN = @DOXYGEN@
+DSYMUTIL = @DSYMUTIL@
 DTRACE = @DTRACE@
 DTRACEFLAGS = @DTRACEFLAGS@
 ECHO = @ECHO@
@@ -130,26 +167,34 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 GREP = @GREP@
-HAVE_DEBUG = @HAVE_DEBUG@
-HAVE_DTRACE = @HAVE_DTRACE@
+HAVE_VISIBILITY = @HAVE_VISIBILITY@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+ISAINFO = @ISAINFO@
 LDFLAGS = @LDFLAGS@
+LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
+LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
+LIBC_P = @LIBC_P@
+LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = 
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MEMCACHED_API_VERSION = @MEMCACHED_API_VERSION@
-MEMCACHED_LIBRARY_NAME = @MEMCACHED_LIBRARY_NAME@
+MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
-MEMCACHED_RELEASE = @MEMCACHED_RELEASE@
-MEMCACHED_VERSION = @MEMCACHED_VERSION@
+MEMC_BINARY = @MEMC_BINARY@
 MKDIR_P = @MKDIR_P@
+NMEDIT = @NMEDIT@
+NO_CONVERSION = @NO_CONVERSION@
+NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
+NO_SHADOW = @NO_SHADOW@
+NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
+NO_UNREACHED = @NO_UNREACHED@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -158,7 +203,12 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL = @PERL@
 POD2MAN = @POD2MAN@
+PROTOSKIP_WARNINGS = @PROTOSKIP_WARNINGS@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -172,6 +222,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
+acx_pthread_config = @acx_pthread_config@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -218,10 +269,10 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-INCLUDES = -I$(top_builddir)
-LDADDS = $(top_builddir)/libmemcached/libmemcached.la
+LDADDS = $(top_builddir)/libmemcached/libmemcached.la $(am__append_1)
 EXTRA_DIST = output.res output2.res\
 		r/memcat.res\
 		r/memcp.res\
@@ -235,16 +286,20 @@ EXTRA_DIST = output.res output2.res\
 		t/memstat.test
 
 noinst_HEADERS = test.h server.h ketama_test_cases.h
-testapp_SOURCES = test.c function.c server.c ../clients/generator.c ../clients/execute.c
-testapp_LDADD = $(LDADDS)
-testplus_SOURCES = test.c plus.cpp server.c
-testplus_LDADD = $(LDADDS)
-udptest_SOURCES = test.c udp.c server.c
-udptest_LDADD = $(LDADDS)
-atomsmasher_SOURCES = test.c atomsmasher.c server.c ../clients/generator.c ../clients/execute.c
-atomsmasher_LDADD = $(LDADDS)
-startservers_SOURCES = start.c server.c
-startservers_LDADD = $(LDADDS)
+noinst_LTLIBRARIES = libserver.la libtest.la
+libserver_la_SOURCES = server.c
+libtest_la_SOURCES = test.c
+testapp_CFLAGS = $(AM_CFLAGS) $(NO_CONVERSION) $(NO_STRICT_ALIASING)
+testapp_SOURCES = function.c
+testapp_LDADD = $(LDADDS) $(top_builddir)/clients/libgenexec.la libtest.la libserver.la
+testplus_SOURCES = plus.cpp
+testplus_LDADD = $(LDADDS) libtest.la libserver.la
+udptest_SOURCES = udp.c
+udptest_LDADD = $(LDADDS) libtest.la libserver.la
+atomsmasher_SOURCES = atomsmasher.c
+atomsmasher_LDADD = $(LDADDS) $(top_builddir)/clients/libgenexec.la libtest.la libserver.la 
+startservers_SOURCES = start.c
+startservers_LDADD = $(LDADDS) libserver.la
 all: all-am
 
 .SUFFIXES:
@@ -279,6 +334,19 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libserver.la: $(libserver_la_OBJECTS) $(libserver_la_DEPENDENCIES) 
+	$(LINK)  $(libserver_la_OBJECTS) $(libserver_la_LIBADD) $(LIBS)
+libtest.la: $(libtest_la_OBJECTS) $(libtest_la_DEPENDENCIES) 
+	$(LINK)  $(libtest_la_OBJECTS) $(libtest_la_LIBADD) $(LIBS)
+
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
@@ -293,7 +361,7 @@ startservers$(EXEEXT): $(startservers_OBJECTS) $(startservers_DEPENDENCIES)
 	$(LINK) $(startservers_OBJECTS) $(startservers_LDADD) $(LIBS)
 testapp$(EXEEXT): $(testapp_OBJECTS) $(testapp_DEPENDENCIES) 
 	@rm -f testapp$(EXEEXT)
-	$(LINK) $(testapp_OBJECTS) $(testapp_LDADD) $(LIBS)
+	$(testapp_LINK) $(testapp_OBJECTS) $(testapp_LDADD) $(LIBS)
 testplus$(EXEEXT): $(testplus_OBJECTS) $(testplus_DEPENDENCIES) 
 	@rm -f testplus$(EXEEXT)
 	$(CXXLINK) $(testplus_OBJECTS) $(testplus_LDADD) $(LIBS)
@@ -308,81 +376,71 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atomsmasher.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execute.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plus.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/start.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testapp-function.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udp.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	mv -f $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-generator.o: ../clients/generator.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT generator.o -MD -MP -MF $(DEPDIR)/generator.Tpo -c -o generator.o `test -f '../clients/generator.c' || echo '$(srcdir)/'`../clients/generator.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/generator.Tpo $(DEPDIR)/generator.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../clients/generator.c' object='generator.o' libtool=no @AMDEPBACKSLASH@
+testapp-function.o: function.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testapp_CFLAGS) $(CFLAGS) -MT testapp-function.o -MD -MP -MF $(DEPDIR)/testapp-function.Tpo -c -o testapp-function.o `test -f 'function.c' || echo '$(srcdir)/'`function.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/testapp-function.Tpo $(DEPDIR)/testapp-function.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='function.c' object='testapp-function.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o generator.o `test -f '../clients/generator.c' || echo '$(srcdir)/'`../clients/generator.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testapp_CFLAGS) $(CFLAGS) -c -o testapp-function.o `test -f 'function.c' || echo '$(srcdir)/'`function.c
 
-generator.obj: ../clients/generator.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT generator.obj -MD -MP -MF $(DEPDIR)/generator.Tpo -c -o generator.obj `if test -f '../clients/generator.c'; then $(CYGPATH_W) '../clients/generator.c'; else $(CYGPATH_W) '$(srcdir)/../clients/generator.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/generator.Tpo $(DEPDIR)/generator.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../clients/generator.c' object='generator.obj' libtool=no @AMDEPBACKSLASH@
+testapp-function.obj: function.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testapp_CFLAGS) $(CFLAGS) -MT testapp-function.obj -MD -MP -MF $(DEPDIR)/testapp-function.Tpo -c -o testapp-function.obj `if test -f 'function.c'; then $(CYGPATH_W) 'function.c'; else $(CYGPATH_W) '$(srcdir)/function.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/testapp-function.Tpo $(DEPDIR)/testapp-function.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='function.c' object='testapp-function.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o generator.obj `if test -f '../clients/generator.c'; then $(CYGPATH_W) '../clients/generator.c'; else $(CYGPATH_W) '$(srcdir)/../clients/generator.c'; fi`
-
-execute.o: ../clients/execute.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT execute.o -MD -MP -MF $(DEPDIR)/execute.Tpo -c -o execute.o `test -f '../clients/execute.c' || echo '$(srcdir)/'`../clients/execute.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/execute.Tpo $(DEPDIR)/execute.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../clients/execute.c' object='execute.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o execute.o `test -f '../clients/execute.c' || echo '$(srcdir)/'`../clients/execute.c
-
-execute.obj: ../clients/execute.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT execute.obj -MD -MP -MF $(DEPDIR)/execute.Tpo -c -o execute.obj `if test -f '../clients/execute.c'; then $(CYGPATH_W) '../clients/execute.c'; else $(CYGPATH_W) '$(srcdir)/../clients/execute.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/execute.Tpo $(DEPDIR)/execute.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../clients/execute.c' object='execute.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o execute.obj `if test -f '../clients/execute.c'; then $(CYGPATH_W) '../clients/execute.c'; else $(CYGPATH_W) '$(srcdir)/../clients/execute.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testapp_CFLAGS) $(CFLAGS) -c -o testapp-function.obj `if test -f 'function.c'; then $(CYGPATH_W) 'function.c'; else $(CYGPATH_W) '$(srcdir)/function.c'; fi`
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
@@ -468,7 +526,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS)
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -496,8 +554,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -556,17 +614,18 @@ uninstall-am:
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-noinstPROGRAMS ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am
+	clean-libtool clean-noinstLTLIBRARIES clean-noinstPROGRAMS \
+	ctags distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am
 
 
 record:
@@ -607,6 +666,27 @@ clients:
 
 valgrind:
 	libtool --mode=execute valgrind --leak-check=yes --show-reachable=yes  testapp
+
+cachegrind:
+	rm -f cachegrind.out.*
+	libtool --mode=execute valgrind --tool=cachegrind  --branch-sim=yes testapp
+	cg_annotate cachegrind.out.* --auto=yes > /tmp/cachegrind.out
+
+callgrind:
+	rm -f callgrind.out.*
+	libtool --mode=execute valgrind --tool=callgrind  testapp
+	callgrind_annotate callgrind.out.* --auto=yes > /tmp/callgrind.out
+
+helgrind:
+	rm -f helgrind.out.*
+	libtool --mode=execute valgrind --tool=helgrind  testapp
+
+helgrind-slap:
+	libtool --mode=execute valgrind --tool=helgrind  ${top_builddir}/clients/memslap --server=localhost --concurrency=30
+
+test-no-outputdiff: testapp
+	./testapp > /dev/null
+	@echo "Test completed"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

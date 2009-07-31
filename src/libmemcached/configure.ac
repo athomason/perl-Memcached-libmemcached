@@ -1,18 +1,18 @@
-AC_INIT(clients/memcat.c)
+# libmemcached 
+# Copyright (C) 2008 Brian Aker, Monty Taylor
+# All rights reserved.
+#
+# Use and distribution licensed under the BSD license.  See
+# the COPYING file in this directory for full text.
+
+AC_PREREQ(2.59)
+AC_INIT([libmemcached],[0.31],[http://tangent.org/552/libmemcached.html])
+AC_CONFIG_SRCDIR([libmemcached/memcached.c])
 AC_CONFIG_AUX_DIR(config)
-AM_CONFIG_HEADER(libmemcached/libmemcached_config.h)
-AC_CANONICAL_SYSTEM
+AM_CONFIG_HEADER([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
-MEMCACHED_LIBRARY_NAME=libmemcached 
-
-#release versioning
-MEMCACHED_MAJOR_VERSION=0
-MEMCACHED_MINOR_VERSION=25
-MEMCACHED_MICRO_VERSION=0
-
-#API version
-MEMCACHED_API_VERSION=1.0
-AC_SUBST(MEMCACHED_API_VERSION)
+PANDORA_CANONICAL_TARGET
 
 #shared library versioning
 MEMCACHED_LIBRARY_VERSION=2:0:0
@@ -26,61 +26,87 @@ MEMCACHED_LIBRARY_VERSION=2:0:0
 #                  |        +- increment if source code has changed
 #                  |           set to zero if current is incremented
 #                  +- increment if interfaces have been added, removed or changed
-
 AC_SUBST(MEMCACHED_LIBRARY_VERSION)
+MEMCACHEDUTIL_LIBRARY_VERSION=0:0:0
+AC_SUBST(MEMCACHEDUTIL_LIBRARY_VERSION)
 
-PACKAGE=$MEMCACHED_LIBRARY_NAME
-AC_SUBST(MEMCACHED_LIBRARY_NAME)
 
-MEMCACHED_VERSION=$MEMCACHED_MAJOR_VERSION.$MEMCACHED_MINOR_VERSION.$MEMCACHED_MICRO_VERSION
-MEMCACHED_RELEASE=$MEMCACHED_MAJOR_VERSION.$MEMCACHED_MINOR_VERSION
-AC_SUBST(MEMCACHED_RELEASE)
-AC_SUBST(MEMCACHED_VERSION)
-
-VERSION=$MEMCACHED_RELEASE
-
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
-
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_LIBTOOL
-AM_SANITY_CHECK
-LIBTOOL="$LIBTOOL --preserve-dup-deps"
-AC_SUBST(LIBTOOL)dnl
-AC_LANG_CPLUSPLUS
-
-sinclude(config/pod2man.m4)
-sinclude(config/debug.m4)
-sinclude(config/dtrace.m4)
-sinclude(config/byteorder.m4)
-sinclude(config/64bit.m4)
-sinclude(config/protocol_binary.m4)
-
-# We only support GCC and Sun's forte at the moment
-CFLAGS="-DMEMCACHED_INTERNAL $CFLAGS"
-if test "$GCC" = "yes"
+# libmemcached versioning when linked with GNU ld.
+if test "$lt_cv_prog_gnu_ld" = "yes"
 then
-  #CFLAGS="-W -std=iso9899:1999 -Wall -Wextra -Wstrict-aliasing -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -O3 $CFLAGS"
-  CFLAGS="-Wall -O3 $CFLAGS"
-
-  if test "$ENABLE_DEBUG" = "yes"
-  then
-    CFLAGS="$CFLAGS -ggdb -DHAVE_DEBUG"
-  fi
-else
-  CFLAGS="-Xa -xstrconst -mt -D_FORTEC_ $CFLAGS"
-  if test "$ENABLE_DEBUG" = "yes"
-  then
-    CFLAGS="$CFLAGS -DHAVE_DEBUG"
-  fi
-  DTRACEFLAGS="$DTRACEFLAGS"
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcached/libmemcached.ver"
+    LD_UTIL_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcachedutil/libmemcachedutil.ver"
 fi
+AC_SUBST(LD_VERSION_SCRIPT)
+AC_SUBST(LD_UTIL_VERSION_SCRIPT)
 
-LDFLAGS="-lm"
-AC_C_CONST
-AC_HEADER_TIME
-AC_TYPE_SIZE_T
+
+#--------------------------------------------------------------------
+# Check for libpthread
+#--------------------------------------------------------------------
+
+ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
+LIBS="${PTHREAD_LIBS} ${LIBS}"
+CFLAGS="${PTHREAD_CFLAGS} ${CFLAGS}"
+CC="$PTHREAD_CC"
+
+
 AC_SEARCH_LIBS(getopt_long, gnugetopt)
 AC_SEARCH_LIBS(socket, socket)
 AC_SEARCH_LIBS(gethostbyname, nsl)
-AC_OUTPUT(Makefile clients/Makefile tests/Makefile docs/Makefile libmemcached/Makefile support/Makefile support/libmemcached.pc support/libmemcached.spec)
+
+save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[
+#include <stdlib.h>
+    ]],[[
+      float f= floorf((float) 1.0);
+    ]],
+    [LIBM="-lm"],[LIBM=""])])
+    
+AC_SUBST(LIBM)
+LIBS="$save_LIBS"
+
+AC_SEARCH_LIBS(floorf, m)
+
+dnl Specialty checks
+DETECT_BYTEORDER
+ENABLE_UTILLIB
+SETSOCKOPT_SANITY
+ENABLE_HSIEH_HASH
+REQUIRE_POD2MAN
+PROTOCOL_BINARY_TEST
+WITH_MEMCACHED
+ENABLE_DEPRECATED
+
+
+AC_CONFIG_FILES([
+  Makefile
+  clients/Makefile
+  tests/Makefile
+  docs/Makefile
+  libmemcached/Makefile
+  libmemcached/memcached_configure.h
+  libmemcachedutil/Makefile
+  support/Makefile
+  support/libmemcached.pc
+  support/libmemcached.spec
+  support/libmemcached-fc.spec
+  ])
+AC_OUTPUT
+
+echo "---"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION"
+echo ""
+echo "   * Installation prefix:       $prefix"
+echo "   * System type:               $host_vendor-$host_os"
+echo "   * Host CPU:                  $host_cpu"
+echo "   * C Compiler:                $CC_VERSION"
+echo "   * Assertions enabled:        $ac_cv_assert"
+echo "   * Debug enabled:             $with_debug"
+echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
+echo ""
+echo "---"
+

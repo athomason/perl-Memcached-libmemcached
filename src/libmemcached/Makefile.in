@@ -34,23 +34,40 @@ host_triplet = @host@
 target_triplet = @target@
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog INSTALL NEWS THANKS TODO config/config.guess \
+	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
+	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
+	THANKS TODO config/compile config/config.guess \
 	config/config.sub config/depcomp config/install-sh \
 	config/ltmain.sh config/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/config/pod2man.m4 \
-	$(top_srcdir)/config/debug.m4 $(top_srcdir)/config/dtrace.m4 \
-	$(top_srcdir)/config/byteorder.m4 \
-	$(top_srcdir)/config/64bit.m4 \
-	$(top_srcdir)/config/protocol_binary.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
+	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
+	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
+	$(top_srcdir)/m4/deprecated.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 \
+	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/memcached.m4 \
+	$(top_srcdir)/m4/pandora_64bit.m4 \
+	$(top_srcdir)/m4/pandora_canonical.m4 \
+	$(top_srcdir)/m4/pandora_check_compiler_version.m4 \
+	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
+	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
+	$(top_srcdir)/m4/pandora_header_assert.m4 \
+	$(top_srcdir)/m4/pandora_libtool.m4 \
+	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_vc_build.m4 \
+	$(top_srcdir)/m4/pandora_warnings.m4 \
+	$(top_srcdir)/m4/pod2man.m4 \
+	$(top_srcdir)/m4/protocol_binary.m4 \
+	$(top_srcdir)/m4/setsockopt.m4 $(top_srcdir)/m4/visibility.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/libmemcached/libmemcached_config.h
+CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
@@ -79,6 +96,9 @@ distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_CFLAGS = @AM_CFLAGS@
+AM_CPPFLAGS = @AM_CPPFLAGS@
+AM_CXXFLAGS = @AM_CXXFLAGS@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -86,18 +106,22 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_VERSION = @CC_VERSION@
 CFLAGS = @CFLAGS@
+CFLAG_VISIBILITY = @CFLAG_VISIBILITY@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
+CXX_VERSION = @CXX_VERSION@
 CYGPATH_W = @CYGPATH_W@
-DEBUG = @DEBUG@
-DEBUGFLAGS = @DEBUGFLAGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DEPRECATED = @DEPRECATED@
+DOXYGEN = @DOXYGEN@
+DSYMUTIL = @DSYMUTIL@
 DTRACE = @DTRACE@
 DTRACEFLAGS = @DTRACEFLAGS@
 ECHO = @ECHO@
@@ -109,26 +133,34 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 GREP = @GREP@
-HAVE_DEBUG = @HAVE_DEBUG@
-HAVE_DTRACE = @HAVE_DTRACE@
+HAVE_VISIBILITY = @HAVE_VISIBILITY@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+ISAINFO = @ISAINFO@
 LDFLAGS = @LDFLAGS@
+LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
+LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
+LIBC_P = @LIBC_P@
+LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MEMCACHED_API_VERSION = @MEMCACHED_API_VERSION@
-MEMCACHED_LIBRARY_NAME = @MEMCACHED_LIBRARY_NAME@
+MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
-MEMCACHED_RELEASE = @MEMCACHED_RELEASE@
-MEMCACHED_VERSION = @MEMCACHED_VERSION@
+MEMC_BINARY = @MEMC_BINARY@
 MKDIR_P = @MKDIR_P@
+NMEDIT = @NMEDIT@
+NO_CONVERSION = @NO_CONVERSION@
+NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
+NO_SHADOW = @NO_SHADOW@
+NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
+NO_UNREACHED = @NO_UNREACHED@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -137,7 +169,12 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL = @PERL@
 POD2MAN = @POD2MAN@
+PROTOSKIP_WARNINGS = @PROTOSKIP_WARNINGS@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -151,6 +188,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
+acx_pthread_config = @acx_pthread_config@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -197,12 +235,14 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-INCLUDES = 
-SUBDIRS = docs libmemcached tests support clients
+ACLOCAL_AMFLAGS = -I m4
+SUBDIRS = docs libmemcached libmemcachedutil support clients tests
 EXTRA_dist = README.FIRST
-all: all-recursive
+all: config.h
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
 am--refresh:
@@ -238,6 +278,23 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
+
+config.h: stamp-h1
+	@if test ! -f $@; then \
+	  rm -f stamp-h1; \
+	  $(MAKE) $(AM_MAKEFLAGS) stamp-h1; \
+	else :; fi
+
+stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+	@rm -f stamp-h1
+	cd $(top_builddir) && $(SHELL) ./config.status config.h
+$(srcdir)/config.h.in:  $(am__configure_deps) 
+	cd $(top_srcdir) && $(AUTOHEADER)
+	rm -f stamp-h1
+	touch $@
+
+distclean-hdr:
+	-rm -f config.h stamp-h1
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -328,7 +385,7 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
@@ -345,7 +402,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
 	  fi; \
 	done; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -357,10 +414,10 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS: ctags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -527,8 +584,9 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-local
 check: check-recursive
-all-am: Makefile
+all-am: Makefile config.h
 installdirs: installdirs-recursive
 installdirs-am:
 install: install-recursive
@@ -562,8 +620,8 @@ clean-am: clean-generic clean-libtool mostlyclean-am
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic distclean-libtool \
-	distclean-tags
+distclean-am: clean-am distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags
 
 dvi: dvi-recursive
 
@@ -617,36 +675,53 @@ uninstall-am:
 	install-strip
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
-	all all-am am--refresh check check-am clean clean-generic \
-	clean-libtool ctags ctags-recursive dist dist-all dist-bzip2 \
-	dist-gzip dist-lzma dist-shar dist-tarZ dist-zip distcheck \
-	distclean distclean-generic distclean-libtool distclean-tags \
-	distcleancheck distdir distuninstallcheck dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am
+	all all-am am--refresh check check-am check-local clean \
+	clean-generic clean-libtool ctags ctags-recursive dist \
+	dist-all dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ \
+	dist-zip distcheck distclean distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags tags-recursive uninstall uninstall-am
 
+
+check-local: test-no-outputdiff
 
 test: all
-	cd tests; make test; cd ..
+	@(cd tests; ${MAKE} test)
 
 test-extended: all
-	cd tests; make test-extended; cd ..
+	@(cd tests; ${MAKE} test-extended)
 
 valgrind:
-	cd tests; make valgrind; cd ..
+	@(cd tests; ${MAKE} valgrind)
 
-rpm: all dist
-	cp libmemcached-$(VERSION).tar.gz /home/brian/rpm/SOURCES/
+test-no-outputdiff:
+	@(cd tests; ${MAKE} test-no-outputdiff)
+
+fedora:
+	rm -f ~/rpmbuild/RPMS/x86_64/libmemcached-$(VERSION)*.rpm
+	rm -f ~/rpmbuild/SRPMS/libmemcached-$(VERSION)*.rpm
+	cp libmemcached-$(VERSION).tar.gz /home/brian/rpmbuild/SOURCES/
 	rpmbuild -ba support/libmemcached.spec
-	cp /home/brian/rpm/RPMS/x86_64/libmemcached-$(VERSION)*.rpm .
-	cp /home/brian/rpm/SRPMS/libmemcached-$(VERSION)*.rpm .
+	cp ~/rpmbuild/RPMS/x86_64/libmemcached-$(VERSION)*.rpm .
+	cp ~/rpmbuild/SRPMS/libmemcached-$(VERSION)*.rpm .
+
+generic:
+	rm -f ~/rpmbuild/RPMS/x86_64/libmemcached-$(VERSION)*.rpm
+	rm -f ~/rpmbuild/SRPMS/libmemcached-$(VERSION)*.rpm
+	cp libmemcached-$(VERSION).tar.gz /home/brian/rpmbuild/SOURCES/
+	rpmbuild -ba support/libmemcached.spec
+	cp ~/rpmbuild/RPMS/x86_64/libmemcached-$(VERSION)*.rpm .
+	cp ~/rpmbuild/SRPMS/libmemcached-$(VERSION)*.rpm .
+
+rpm: all dist generic fedora
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
