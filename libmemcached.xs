@@ -346,8 +346,12 @@ _fetch_one_sv(memcached_st *ptr, lmc_data_flags_t *flags_ptr, memcached_return *
 
     *error_ptr = memcached_fetch_execute(ptr, callbacks, lmc_cb_context, callback_ix);
 
-    if (lmc_cb_context->result_count == 0 && *error_ptr == MEMCACHED_SUCCESS)
-        *error_ptr = MEMCACHED_NOTFOUND; /* to match memcached_get behaviour */
+    if (*error_ptr == MEMCACHED_END) {
+        if (lmc_cb_context->result_count == 0)
+            *error_ptr = MEMCACHED_NOTFOUND; /* to match memcached_get behaviour */
+        else
+            *error_ptr = MEMCACHED_SUCCESS; /* not really an error */
+    }
 
     return lmc_cb_context->dest_sv;
 }
