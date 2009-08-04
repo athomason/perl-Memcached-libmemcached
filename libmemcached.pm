@@ -501,6 +501,67 @@ By-key variants of L</Functions for Setting Values>:
 
 =head3 memcached_delete_by_key
 
+=head2 Building Batch Requests
+
+For situations where heterogenous master keys (or no master key) need to be
+requested in a single multi-get, the batch request mechanism exists to allow
+building a request incrementally.
+
+A request is first created with memcached_batch_create:
+
+    # if number of keys to be fetched is unknown
+    $batch = memcached_batch_create($memc);
+
+    # if number of keys is known
+    $batch = memcached_batch_create_sized($memc, undef, $num_keys);
+
+It is then populated a key at a time with memcached_batch_get,
+memcached_batch_get_by_hash, or memcached_batch_get_by_key:
+
+    # regular form, a la memcached_get
+    memcached_batch_get($batch, "key");
+
+    # master key form, a la memcached_get_by_key
+    memcached_batch_get_by_key($batch, "key", "masterkey");
+
+    # pre-computed hash form
+    $master_hash = memcached_generate_hash("masterkey");
+    memcached_batch_get_by_hash($batch, "key1", $master_hash);
+    memcached_batch_get_by_hash($batch, "key2", $master_hash);
+
+The latter form exists if several keys will be requested from the same server;
+it saves recomputing the hash for each key. The hash value should always be
+computed using memcached_generate_hash.
+
+Once all keys have been added to the batch request, 
+
+    memcached_mget_batch($memc, $batch);
+
+This has the same semantics as memcached_mget; values must be retrieved using
+memcached_fetch.
+
+A batch request object may be reused after calling memcached_batch_reset.
+
+A batch request object should be disposed of after using by calling memcached_batch_free.
+
+=head3 memcached_batch_create
+
+=head3 memcached_batch_create_sized
+
+=head3 memcached_batch_get
+
+=head3 memcached_batch_get_by_key
+
+=head3 memcached_batch_get_by_hash
+
+=head3 memcached_generate_hash
+
+=head3 memcached_mget_batch
+
+=head3 memcached_batch_reset
+
+=head3 memcached_batch_free
+
 =head1 OBJECT-ORIENTED INTERFACE
 
 =head2 Methods
