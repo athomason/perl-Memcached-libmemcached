@@ -22,6 +22,7 @@ memcached_return                        T_RETURN
 # --- generic simple types ---
 # general uint16_t
 uint16_t                                T_UV
+uint32_t                                T_UV
 # XXX need to at least document this as an issue
 # Could also check at build time if this perl has 64bit ints and use UV if so
 uint64_t                                T_NV
