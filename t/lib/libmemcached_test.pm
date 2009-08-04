@@ -39,25 +39,27 @@ sub libmemcached_test_create {
     my $memc = memcached_create()
         or die "memcached_create failed";
 
-    # XXX would be good to filter this list by those we can communicate with
-    # (and have sufficient version number)
-    # then pick the first of those to use as the default test server
-    my ($server,$port) = split /:/, (libmemcached_test_servers())[0];
+    for my $server (libmemcached_test_servers()) {
+        # XXX would be good to filter this list by those we can communicate with
+        # (and have sufficient version number)
+        # then pick the first of those to use as the default test server
+        my ($server,$port) = split /:/, $server;
 
-    # XXX may change to memcached_parse_options or somesuch so the env
-    # var can set behaviours etc   
-    my $rc = memcached_server_add($memc, $server, $port);
-    die "libmemcached_test_create: memcached_server_add($server) failed: ".memcached_errstr($memc)
-        if not $rc;
+        # XXX may change to memcached_parse_options or somesuch so the env
+        # var can set behaviours etc   
+        my $rc = memcached_server_add($memc, $server, $port);
+        die "libmemcached_test_create: memcached_server_add($server) failed: ".memcached_errstr($memc)
+            if not $rc;
 
-    # XXX ideally this should be a much 'simpler/safer' command
-    memcached_get($memc, "foo");
-    plan skip_all => "Can't talk to any memcached servers"
-        if memcached_errstr($memc) !~ /SUCCESS|NOT FOUND|SERVER END/;
+        # XXX ideally this should be a much 'simpler/safer' command
+        memcached_get($memc, "foo");
+        plan skip_all => "Can't talk to any memcached servers"
+            if memcached_errstr($memc) !~ /SUCCESS|NOT FOUND|SERVER END/;
 
-    plan skip_all => "memcached server version less than $args->{min_version}"
-        if $args->{min_version}
-        && not libmemcached_version_ge($memc, $args->{min_version});
+        plan skip_all => "memcached server version less than $args->{min_version}"
+            if $args->{min_version}
+            && not libmemcached_version_ge($memc, $args->{min_version});
+    }
 
     return $memc;
 }
