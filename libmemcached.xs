@@ -657,6 +657,8 @@ memcached_batch_get_by_key(Memcached__libmemcached__batch ptr, lmc_key key, size
 void
 memcached_batch_get_by_hash(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), unsigned int hash)
 
+uint32_t
+memcached_generate_hash(Memcached__libmemcached ptr, lmc_key key, size_t length(key))
 
 
 lmc_value
