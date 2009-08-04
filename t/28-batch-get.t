@@ -14,8 +14,8 @@ use Memcached::libmemcached
         memcached_batch_get
         memcached_batch_get_by_hash
         memcached_batch_get_by_key
-        memcached_mget_batch
         memcached_generate_hash
+        memcached_mget_batch
     ),
     #   other functions used by the tests
     qw(
