@@ -11,6 +11,7 @@
 
 /* mapping C types to perl classes - keep typemap file in sync */
 typedef memcached_st*        Memcached__libmemcached;
+typedef memcached_batch_st*  Memcached__libmemcached__batch;
 typedef uint32_t             lmc_data_flags_t;
 typedef char*                lmc_key;
 typedef char*                lmc_value;
@@ -626,6 +627,35 @@ memcached_mget_by_key(Memcached__libmemcached ptr, lmc_key master_key, size_t le
         }
     OUTPUT:
         RETVAL
+
+
+Memcached__libmemcached__batch
+memcached_batch_create(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch=NULL)
+    INIT:
+        batch = NULL;
+
+Memcached__libmemcached__batch
+memcached_batch_create_sized(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch=NULL, size_t initial_size)
+    INIT:
+        batch = NULL;
+
+void
+memcached_batch_free(Memcached__libmemcached__batch batch)
+
+void
+memcached_batch_reset(Memcached__libmemcached__batch ptr)
+
+memcached_return
+memcached_mget_batch(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch)
+
+void
+memcached_batch_get(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key))
+
+void
+memcached_batch_get_by_key(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), lmc_key master_key, size_t length(master_key))
+
+void
+memcached_batch_get_by_hash(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), unsigned int hash)
 
 
 

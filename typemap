@@ -35,6 +35,7 @@ lmc_data_flags_t                        T_FLAGS
 # --- complex types (incl. objects, typedef name encodes class name) ---
 # XXX memory management may be reworked to store structure in scalars
 Memcached__libmemcached                 T_MEMCACHED
+Memcached__libmemcached__batch          T_BATCH
 
 
 INPUT
@@ -135,6 +136,19 @@ T_EXPIRATION
         /* T_EXPIRATION */
         /* XXX add logic for default expiration */
         $var = ($type)SvUV($arg)
+
+OUTPUT
+T_BATCH
+        sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/__/::/g;\$ntt}\", (void*)$var);
+
+INPUT
+T_BATCH
+        if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/__/::/g;\$ntt}\")) {
+            IV tmp = SvIV((SV*)SvRV($arg));
+            $var = INT2PTR($type, tmp);
+        }
+        else
+            croak(\"$var is not of type ${(my $ntt=$ntype)=~s/__/::/g;\$ntt}\")
 
 OUTPUT
 T_MEMCACHED
