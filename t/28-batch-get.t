@@ -15,6 +15,7 @@ use Memcached::libmemcached
         memcached_batch_get
         memcached_batch_get_by_hash
         memcached_batch_get_by_key
+        memcached_batch_free
         memcached_generate_hash
         memcached_mget_batch
     ),
@@ -61,6 +62,7 @@ for my $k1 (keys %data) {
 }
 
 memcached_mget_batch($memc, $batch);
+memcached_batch_free($batch);
 
 my %got;
 my $key;
@@ -78,4 +80,6 @@ for (keys %data) {
 
 is_deeply \%got, \%data;
 
-ok memcached_batch_create_sized($memc, 10);
+my $batch2 = memcached_batch_create_sized($memc, 10);
+ok $batch2, 'memcached_batch_create_sized';
+memcached_batch_free($batch2);
