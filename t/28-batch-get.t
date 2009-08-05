@@ -11,6 +11,7 @@ use Memcached::libmemcached
     #   functions explicitly tested by this file
     qw(
         memcached_batch_create
+        memcached_batch_create_sized
         memcached_batch_get
         memcached_batch_get_by_hash
         memcached_batch_get_by_key
@@ -30,7 +31,7 @@ use libmemcached_test;
 my $memc = libmemcached_test_create();
 
 my $items = 5;
-plan tests => ($items * 9) + 3;
+plan tests => ($items * 9) + 4;
 
 my ($rv, $rc, $flags, $tmp);
 my $t1= time();
@@ -76,3 +77,5 @@ for (keys %data) {
 }
 
 is_deeply \%got, \%data;
+
+ok memcached_batch_create_sized($memc, 10);
