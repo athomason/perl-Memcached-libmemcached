@@ -13,6 +13,9 @@ C Client Library for memcached (libmemcached, -lmemcached)
   memcached_batch_st *
   memcached_batch_create(memcached_st *ptr, memcached_batch_st *batch);
 
+  memcached_batch_st *
+  memcached_batch_create_sized(memcached_st *ptr, memcached_batch_st *batch, size_t size);
+
   memcached_batch_get(memcached_batch_st *ptr,
                       const char* key, size_t key_length);
 
@@ -31,6 +34,8 @@ C Client Library for memcached (libmemcached, -lmemcached)
 
 memcached_batch_create() returns a memcached_batch_st structure which should be
 populated with heterogeneous keys to be fetched in a single multiget request.
+memcached_batch_create_sized() works the same but preallocates for the given
+number of keys.
 
 memcached_batch_get() adds a key (in the manner of memcached_get()) to a
 memcached_batch_st request. The server to query for the key is determined by
@@ -43,6 +48,8 @@ memcached_batch_get_by_hash() adds a key with a pre-computed server-specifying
 master to a memcached_batch_st request. This function should only be preferred
 over memcached_batch_get_by_key if multiple keys will be added with the same
 master key, to thereby avoid recomputing the integer hash of the master key.
+Generally this value should be computed using memcached_generate_hash() to
+match the corresponding set_by_key.
 
 memcached_mget_batch() dispatches the multiget request for all keys added to
 the memcached_batch_st structure. As with the memcached_mget() family,
