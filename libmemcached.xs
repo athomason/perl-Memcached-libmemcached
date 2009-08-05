@@ -635,9 +635,11 @@ memcached_batch_create(Memcached__libmemcached ptr, Memcached__libmemcached__bat
         batch = NULL;
 
 Memcached__libmemcached__batch
-memcached_batch_create_sized(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch=NULL, size_t initial_size)
-    INIT:
-        batch = NULL;
+memcached_batch_create_sized(Memcached__libmemcached ptr, size_t initial_size)
+    CODE:
+        RETVAL = memcached_batch_create_sized(ptr, NULL, initial_size);
+    OUTPUT:
+        RETVAL
 
 void
 memcached_batch_free(Memcached__libmemcached__batch batch)

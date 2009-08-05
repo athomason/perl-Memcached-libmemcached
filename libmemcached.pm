@@ -513,7 +513,7 @@ A request is first created with memcached_batch_create:
     $batch = memcached_batch_create($memc);
 
     # if number of keys is known
-    $batch = memcached_batch_create_sized($memc, undef, $num_keys);
+    $batch = memcached_batch_create_sized($memc, $num_keys);
 
 It is then populated a key at a time with memcached_batch_get,
 memcached_batch_get_by_hash, or memcached_batch_get_by_key:
