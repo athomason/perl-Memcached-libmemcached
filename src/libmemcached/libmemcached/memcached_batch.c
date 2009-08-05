@@ -62,7 +62,7 @@ void memcached_batch_get_by_hash(memcached_batch_st *ptr,
     ptr->key_hashes= ptr->root->call_realloc(ptr->root, ptr->key_hashes, ptr->capacity * sizeof(uint32_t));
   }
 
-  ptr->keys[ptr->number_of_keys] = strndup(key, key_length);
+  ptr->keys[ptr->number_of_keys] = key;
   ptr->key_lengths[ptr->number_of_keys] = key_length;
   ptr->key_hashes[ptr->number_of_keys] = hash;
 
@@ -81,12 +81,9 @@ void memcached_batch_reset(memcached_batch_st *ptr)
 
 void memcached_batch_free(memcached_batch_st *ptr)
 {
-  int i;
   if (ptr == NULL)
     return;
 
-  for (i = 0; i < ptr->number_of_keys; i++)
-    free(ptr->keys[i]); /* strndup uses system malloc */
   ptr->root->call_free(ptr->root, ptr->keys);
   ptr->root->call_free(ptr->root, ptr->key_lengths);
   ptr->root->call_free(ptr->root, ptr->key_hashes);
