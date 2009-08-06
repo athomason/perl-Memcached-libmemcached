@@ -821,22 +821,40 @@ get_multi(Memcached__libmemcached ptr, ...)
         SV *dest_ref = sv_2mortal(newRV_noinc((SV*)hv));
         char **keys;
         size_t *key_length;
+        char *master_key = NULL;
+        size_t master_key_len = 0;
         unsigned int number_of_keys = --items;
         memcached_return ret;
         lmc_cb_context_st *lmc_cb_context;
+        memcached_batch_st* batch;
+        SV* key_sv;
     PPCODE:
-        /* XXX does not support keys being [ $master_key, $key ] */
         lmc_cb_context = LMC_STATE_FROM_PTR(ptr)->cb_context;
+
+        batch = memcached_batch_create_sized(ptr, NULL, number_of_keys);
 
         if (number_of_keys > lmc_cb_context->key_alloc_count)
             _prep_keys_buffer(lmc_cb_context, number_of_keys);
         keys       = lmc_cb_context->key_strings;
         key_length = lmc_cb_context->key_lengths;
+
         while (--items >= 0) {
-            keys[items] = SvPV(ST(items+1), key_length[items]);
+            key_sv = ST(items+1);
+            if (SvROK(key_sv) && SvTYPE(SvRV(key_sv)) == SVt_PVAV) {
+                AV *av = (AV*)SvRV(key_sv);
+                master_key = SvPV(AvARRAY(av)[0], master_key_len);
+                keys[items] = SvPV(AvARRAY(av)[1], key_length[items]);
+                memcached_batch_get_by_key(batch, keys[items], key_length[items], master_key, master_key_len);
+            }
+            else {
+                keys[items] = SvPV(key_sv, key_length[items]);
+                memcached_batch_get(batch, keys[items], key_length[items]);
+            }
         }
 
-        ret = memcached_mget(ptr, keys, key_length, number_of_keys);
+        ret = memcached_mget_batch(ptr, batch);
+        memcached_batch_free(batch);
+
         _fetch_all_into_hashref(ptr, ret, hv);
         if (lmc_cb_context->lmc_state->trace_level)
             warn("get_multi of %d keys: mget %s, fetched %d",
