@@ -15,6 +15,7 @@ typedef memcached_batch_st*  Memcached__libmemcached__batch;
 typedef uint32_t             lmc_data_flags_t;
 typedef char*                lmc_key;
 typedef char*                lmc_value;
+typedef const char**         lmc_keys_in;
 typedef time_t               lmc_expiration;
 
 /* pointer chasing:
@@ -583,7 +584,7 @@ memcached_get(Memcached__libmemcached ptr, \
         IN_OUT memcached_return error=0)
     CODE:
         /* rc is the return code from the preceeding mget */
-        error = memcached_mget_by_key(ptr, NULL, 0, &key, &XSauto_length_of_key, 1);
+        error = memcached_mget_by_key(ptr, NULL, 0, (lmc_keys_in) &key, &XSauto_length_of_key, 1);
         RETVAL = _fetch_one_sv(ptr, &flags, &error);
     OUTPUT:
         RETVAL
@@ -596,7 +597,7 @@ memcached_get_by_key(Memcached__libmemcached ptr, \
         IN_OUT lmc_data_flags_t flags=0, \
         IN_OUT memcached_return error=0)
     CODE:
-        error = memcached_mget_by_key(ptr, master_key, XSauto_length_of_master_key, &key, &XSauto_length_of_key, 1);
+        error = memcached_mget_by_key(ptr, master_key, XSauto_length_of_master_key, (lmc_keys_in) &key, &XSauto_length_of_key, 1);
         RETVAL = _fetch_one_sv(ptr, &flags, &error);
     OUTPUT:
         RETVAL
@@ -610,7 +611,7 @@ memcached_mget(Memcached__libmemcached ptr, SV *keys_rv)
         unsigned int number_of_keys;
     CODE:
         if ((RETVAL = _prep_keys_lengths(ptr, keys_rv, &keys, &key_length, &number_of_keys)) == MEMCACHED_SUCCESS) {
-            RETVAL = memcached_mget(ptr, keys, key_length, number_of_keys);
+            RETVAL = memcached_mget(ptr, (lmc_keys_in) keys, key_length, number_of_keys);
         }
     OUTPUT:
         RETVAL
@@ -623,7 +624,7 @@ memcached_mget_by_key(Memcached__libmemcached ptr, lmc_key master_key, size_t le
         unsigned int number_of_keys;
     CODE:
         if ((RETVAL = _prep_keys_lengths(ptr, keys_rv, &keys, &key_length, &number_of_keys)) == MEMCACHED_SUCCESS) {
-            RETVAL = memcached_mget_by_key(ptr, master_key, XSauto_length_of_master_key, keys, key_length, number_of_keys);
+            RETVAL = memcached_mget_by_key(ptr, master_key, XSauto_length_of_master_key, (lmc_keys_in) keys, key_length, number_of_keys);
         }
     OUTPUT:
         RETVAL
@@ -728,7 +729,7 @@ memcached_flush(Memcached__libmemcached ptr, lmc_expiration expiration=0)
 void
 memcached_quit(Memcached__libmemcached ptr)
 
-char *
+const char *
 memcached_strerror(Memcached__libmemcached ptr, memcached_return rc)
 
 const char *
@@ -808,7 +809,7 @@ get(Memcached__libmemcached ptr, SV *key_sv)
             warn("get with array ref as key is deprecated");
         }
         key = SvPV(key_sv, key_len);
-        error = memcached_mget_by_key(ptr, master_key, master_key_len, &key, &key_len, 1);
+        error = memcached_mget_by_key(ptr, master_key, master_key_len, (lmc_keys_in) &key, &key_len, 1);
         RETVAL = _fetch_one_sv(ptr, &flags, &error);
     OUTPUT:
         RETVAL
@@ -875,7 +876,7 @@ mget_into_hashref(Memcached__libmemcached ptr, SV *keys_ref, HV *dest_ref)
     CODE:
         PERL_UNUSED_VAR(ix);
         if ((RETVAL = _prep_keys_lengths(ptr, keys_ref, &keys, &key_length, &number_of_keys)) == MEMCACHED_SUCCESS) {
-            RETVAL = memcached_mget(ptr, keys, key_length, number_of_keys);
+            RETVAL = memcached_mget(ptr, (lmc_keys_in) keys, key_length, number_of_keys);
             RETVAL = _fetch_all_into_hashref(ptr, RETVAL, dest_ref);
         }
     OUTPUT:
