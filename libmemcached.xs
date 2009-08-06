@@ -130,7 +130,7 @@ _prep_keys_buffer(lmc_cb_context_st *lmc_cb_context, int keys_needed)
         Renew(lmc_cb_context->key_strings, keys_needed, char *);
         Renew(lmc_cb_context->key_lengths, keys_needed, size_t);
         if (trace_level >= 3)
-            warn("growing keys buffer %d->%d", lmc_cb_context->key_alloc_count, keys_needed);
+            warn("growing keys buffer %ld->%d", lmc_cb_context->key_alloc_count, keys_needed);
     }
     lmc_cb_context->key_alloc_count = keys_needed;
 }
@@ -214,7 +214,7 @@ _cb_store_into_sv(memcached_st *ptr, memcached_result_st *result, void *context)
     *lmc_cb_context->flags_ptr = memcached_result_flags(result);
     sv_setpvn(lmc_cb_context->dest_sv, memcached_result_value(result), memcached_result_length(result));
     if (lmc_cb_context->lmc_state->trace_level >= 2)
-        warn("fetched %s (value len %d, flags %lu)\n",
+        warn("fetched %s (value len %lu, flags %u)\n",
             memcached_result_key_value(result), memcached_result_length(result), memcached_result_flags(result));
     return 0;
 }
@@ -857,7 +857,7 @@ get_multi(Memcached__libmemcached ptr, ...)
 
         _fetch_all_into_hashref(ptr, ret, hv);
         if (lmc_cb_context->lmc_state->trace_level)
-            warn("get_multi of %d keys: mget %s, fetched %d",
+            warn("get_multi of %d keys: mget %s, fetched %lu",
                 number_of_keys, memcached_strerror(ptr,ret), lmc_cb_context->result_count);
         PUSHs(dest_ref);
         XSRETURN(1);
