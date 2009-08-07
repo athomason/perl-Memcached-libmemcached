@@ -17,6 +17,7 @@ use Memcached::libmemcached
     #   other functions used by the tests
     qw(
         memcached_set
+        memcached_set_by_key
     );
 
 use lib 't/lib';
@@ -29,7 +30,7 @@ plan tests => ($items * 3) + 3
     + 2 * (1 + $items * 2 + 1)
     + $items + 6
     + $items + 7
-    + 1;
+    + 10;
 
 my ($rv, $rc, $flags, $tmp);
 my $t1= time();
@@ -129,3 +130,15 @@ is_deeply $tmp, \%data,
 # refetch with duplicate keys, mainly to trigger realloc of key buffers
 is_deeply $memc->get_multi((keys %data) x 10), \%data,
     'should return true';
+
+# get_multi with master keys
+my $master_key = 'master';
+%data = map { $_ . "m" } %data;
+ok memcached_set_by_key($memc, $master_key, $_, $data{$_})
+    for keys %data;
+$tmp = $memc->get_multi(map { [$master_key, $_] } keys %data);
+ok $tmp;
+is ref $tmp, 'HASH';
+is scalar keys %$tmp, scalar keys %data;
+is_deeply $tmp, \%data,
+    'results should match';
