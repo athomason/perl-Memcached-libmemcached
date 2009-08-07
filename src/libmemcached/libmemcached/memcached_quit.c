@@ -56,7 +56,8 @@ void memcached_quit(memcached_st *ptr)
 {
   unsigned int x;
 
-  if (ptr->hosts == NULL || 
+  if (ptr == NULL ||
+      ptr->hosts == NULL || 
       ptr->number_of_hosts == 0)
     return;
 
