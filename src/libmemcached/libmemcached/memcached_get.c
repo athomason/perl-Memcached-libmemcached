@@ -256,11 +256,11 @@ memcached_return memcached_mget_by_key(memcached_st *ptr,
   return rc;
 }
 
-static memcached_return binary_mget_batch(memcached_st *ptr,
-                                          memcached_batch_st* batch);
+static memcached_return binary_batch_dispatch(memcached_st *ptr,
+                                              memcached_batch_st* batch);
 
-memcached_return memcached_mget_batch(memcached_st *ptr, 
-                                      memcached_batch_st *batch)
+memcached_return memcached_batch_dispatch(memcached_st *ptr, 
+                                          memcached_batch_st *batch)
 {
   unsigned int x;
   memcached_return rc= MEMCACHED_NOTFOUND;
@@ -303,7 +303,7 @@ memcached_return memcached_mget_batch(memcached_st *ptr,
   }
   
   if (ptr->flags & MEM_BINARY_PROTOCOL)
-    return binary_mget_batch(ptr, batch);
+    return binary_batch_dispatch(ptr, batch);
 
   if (ptr->flags & MEM_SUPPORT_CAS)
   {
@@ -483,8 +483,8 @@ static memcached_return simple_binary_mget(memcached_st *ptr,
   return rc;
 }
 
-static memcached_return simple_binary_mget_batch(memcached_st *ptr,
-                                                 memcached_batch_st* batch)
+static memcached_return simple_binary_batch_dispatch(memcached_st *ptr,
+                                                     memcached_batch_st* batch)
 {
   memcached_return rc= MEMCACHED_NOTFOUND;
   uint32_t x;
@@ -722,14 +722,14 @@ static memcached_return binary_mget_by_key(memcached_st *ptr,
   return rc;
 }
 
-static memcached_return binary_mget_batch(memcached_st *ptr,
-                                          memcached_batch_st* batch)
+static memcached_return binary_batch_dispatch(memcached_st *ptr,
+                                              memcached_batch_st* batch)
 {
   memcached_return rc;
 
   if (ptr->number_of_replicas == 0) 
   {
-    rc= simple_binary_mget_batch(ptr, batch);
+    rc= simple_binary_batch_dispatch(ptr, batch);
   } 
   else 
   {

@@ -2312,6 +2312,7 @@ static test_return  user_supplied_bug16(memcached_st *memc)
   return 0;
 }
 
+#ifndef __sun
 /* Check the validity of chinese key*/
 static test_return  user_supplied_bug17(memcached_st *memc)
 {
@@ -2338,6 +2339,7 @@ static test_return  user_supplied_bug17(memcached_st *memc)
 
     return 0;
 }
+#endif
 
 /*
   From Andrei on IRC
@@ -3817,16 +3819,16 @@ static test_return batch_get_test(memcached_st *memc)
   memcached_set_by_key(memc, "asdf", 4, "foo3b", 5, "0", 1, (time_t)0, (uint32_t)0);
   memcached_set(memc, "foo4", 4, "0", 1, (time_t)0, (uint32_t)0);
 
-  memcached_batch_get(batch, "foo1", 4);
-  memcached_batch_get_by_key(batch, "foo2", 4, "bar", 4);
-  memcached_batch_get_by_hash(batch, "foo3a", 5, hash);
-  memcached_batch_get_by_hash(batch, "foo3b", 5, hash);
-  memcached_batch_get(batch, "foo4", 4);
+  memcached_batch_add_get(batch, "foo1", 4);
+  memcached_batch_add_get_by_key(batch, "foo2", 4, "bar", 3);
+  memcached_batch_add_get_by_hash(batch, "foo3a", 5, hash);
+  memcached_batch_add_get_by_hash(batch, "foo3b", 5, hash);
+  memcached_batch_add_get(batch, "foo4", 4);
 
   assert(batch->number_of_keys == 5);
   assert(batch->capacity >= 5);
 
-  rc= memcached_mget_batch(memc, batch);
+  rc= memcached_batch_dispatch(memc, batch);
   assert(rc == MEMCACHED_SUCCESS);
 
   memcached_result_st *results= memcached_result_create(memc, &result_obj);
@@ -4488,6 +4490,7 @@ test_st tests[] ={
   {"mget_result", 1, mget_result_test },
   {"mget_result_alloc", 1, mget_result_alloc_test },
   {"mget_result_function", 1, mget_result_function },
+  {"batch", 1, batch_get_test },
   {"get_stats", 0, get_stats },
   {"add_host_test", 0, add_host_test },
   {"add_host_test_1", 0, add_host_test1 },
@@ -4636,11 +4639,6 @@ test_st hash_tests[] ={
   {0, 0, 0}
 };
 
-test_st batch_tests[]= {
-  {"get", 1, batch_get_test },
-  {0, 0, 0}
-};
-
 collection_st collection[] ={
   {"hsieh_availability",0,0,hsieh_availability},
   {"udp_setup", init_udp, 0, udp_setup_server_tests},
@@ -4691,7 +4689,6 @@ collection_st collection[] ={
   {"test_hashes", 0, 0, hash_tests},
   {"replication", pre_replication, 0, replication_tests},
   {"replication_noblock", pre_replication_noblock, 0, replication_tests},
-  {"batch", 0, 0, batch_tests},
   {0, 0, 0, 0}
 };
 

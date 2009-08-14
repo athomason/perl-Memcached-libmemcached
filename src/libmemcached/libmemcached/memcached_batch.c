@@ -36,24 +36,28 @@ memcached_batch_st *memcached_batch_create_sized(memcached_st *memc,
   return ptr;
 }
 
-void memcached_batch_get(memcached_batch_st *ptr,
+void memcached_batch_add_get(memcached_batch_st *ptr,
                          const char* key, size_t key_length)
 {
-  memcached_batch_get_by_hash(ptr, key, key_length,
-                              memcached_generate_hash(ptr->root, key, key_length));
+  memcached_batch_add_get_by_hash(
+    ptr, key, key_length,
+    memcached_generate_hash(ptr->root, key, key_length)
+  );
 }
 
-void memcached_batch_get_by_key(memcached_batch_st *ptr,
-                                const char* key, size_t key_length,
-                                const char* master_key, size_t master_key_length)
+void memcached_batch_add_get_by_key(memcached_batch_st *ptr,
+                                    const char* key, size_t key_length,
+                                    const char* master_key, size_t master_key_length)
 {
-  memcached_batch_get_by_hash(ptr, key, key_length,
-                              memcached_generate_hash(ptr->root, master_key, master_key_length));
+  memcached_batch_add_get_by_hash(
+    ptr, key, key_length,
+    memcached_generate_hash(ptr->root, master_key, master_key_length)
+  );
 }
 
-void memcached_batch_get_by_hash(memcached_batch_st *ptr,
-                                 const char* key, size_t key_length,
-                                 uint32_t hash)
+void memcached_batch_add_get_by_hash(memcached_batch_st *ptr,
+                                     const char* key, size_t key_length,
+                                     uint32_t hash)
 {
   if (ptr->number_of_keys + 1 > ptr->capacity) {
     ptr->capacity *= 2;
@@ -81,12 +85,12 @@ void memcached_batch_reset(memcached_batch_st *ptr)
 
 void memcached_batch_free(memcached_batch_st *ptr)
 {
-  int i;
+  size_t i;
   if (ptr == NULL)
     return;
 
   for (i = 0; i < ptr->number_of_keys; i++)
-    free(ptr->keys[i]); /* strndup uses system malloc */
+    free((void*) ptr->keys[i]); /* strndup uses system malloc */
   ptr->root->call_free(ptr->root, ptr->keys);
   ptr->root->call_free(ptr->root, ptr->key_lengths);
   ptr->root->call_free(ptr->root, ptr->key_hashes);

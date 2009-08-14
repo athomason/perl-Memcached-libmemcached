@@ -42,16 +42,16 @@ LIBMEMCACHED_API
 void memcached_batch_reset(memcached_batch_st *ptr);
 
 LIBMEMCACHED_API
-void memcached_batch_get(memcached_batch_st *ptr,
-                         const char* key, size_t key_length);
+void memcached_batch_add_get(memcached_batch_st *ptr,
+                             const char* key, size_t key_length);
 LIBMEMCACHED_API
-void memcached_batch_get_by_key(memcached_batch_st *ptr,
-                                const char* key, size_t key_length,
-                                const char* master_key, size_t master_key_length);
+void memcached_batch_add_get_by_key(memcached_batch_st *ptr,
+                                    const char* key, size_t key_length,
+                                    const char* master_key, size_t master_key_length);
 LIBMEMCACHED_API
-void memcached_batch_get_by_hash(memcached_batch_st *ptr,
-                                 const char* key, size_t key_length,
-                                 unsigned int hash);
+void memcached_batch_add_get_by_hash(memcached_batch_st *ptr,
+                                     const char* key, size_t key_length,
+                                     unsigned int hash);
 
 #ifdef __cplusplus
 }

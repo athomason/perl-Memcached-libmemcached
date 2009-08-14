@@ -43,8 +43,8 @@ memcached_return memcached_mget_by_key(memcached_st *ptr,
                                        size_t number_of_keys);
 
 LIBMEMCACHED_API
-memcached_return memcached_mget_batch(memcached_st *ptr, 
-                                      memcached_batch_st *batch);
+memcached_return memcached_batch_dispatch(memcached_st *ptr, 
+                                          memcached_batch_st *batch);
 
 LIBMEMCACHED_API
 char *memcached_fetch(memcached_st *ptr, 
