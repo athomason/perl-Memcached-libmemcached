@@ -515,19 +515,19 @@ A request is first created with memcached_batch_create:
     # if number of keys is known
     $batch = memcached_batch_create_sized($memc, $num_keys);
 
-It is then populated a key at a time with memcached_batch_get,
-memcached_batch_get_by_hash, or memcached_batch_get_by_key:
+It is then populated a key at a time with memcached_batch_add_get,
+   memcached_batch_add_get_by_hash, or memcached_batch_add_get_by_key:
 
     # regular form, a la memcached_get
-    memcached_batch_get($batch, "key");
+    memcached_batch_add_get($batch, "key");
 
     # master key form, a la memcached_get_by_key
-    memcached_batch_get_by_key($batch, "key", "masterkey");
+    memcached_batch_add_get_by_key($batch, "key", "masterkey");
 
     # pre-computed hash form
     $master_hash = memcached_generate_hash("masterkey");
-    memcached_batch_get_by_hash($batch, "key1", $master_hash);
-    memcached_batch_get_by_hash($batch, "key2", $master_hash);
+    memcached_batch_add_get_by_hash($batch, "key1", $master_hash);
+    memcached_batch_add_get_by_hash($batch, "key2", $master_hash);
 
 The latter form exists if several keys will be requested from the same server;
 it saves recomputing the hash for each key. The hash value should always be
@@ -535,7 +535,7 @@ computed using memcached_generate_hash.
 
 Once all keys have been added to the batch request, 
 
-    memcached_mget_batch($memc, $batch);
+    memcached_batch_dispatch($memc, $batch);
 
 This has the same semantics as memcached_mget; values must be retrieved using
 memcached_fetch.
@@ -548,15 +548,15 @@ A batch request object should be disposed of after using by calling memcached_ba
 
 =head3 memcached_batch_create_sized
 
-=head3 memcached_batch_get
+=head3 memcached_batch_add_get
 
-=head3 memcached_batch_get_by_key
+=head3 memcached_batch_add_get_by_key
 
-=head3 memcached_batch_get_by_hash
+=head3 memcached_batch_add_get_by_hash
 
 =head3 memcached_generate_hash
 
-=head3 memcached_mget_batch
+=head3 memcached_batch_dispatch
 
 =head3 memcached_batch_reset
 

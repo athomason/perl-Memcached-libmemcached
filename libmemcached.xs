@@ -649,16 +649,16 @@ void
 memcached_batch_reset(Memcached__libmemcached__batch ptr)
 
 memcached_return
-memcached_mget_batch(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch)
+memcached_batch_dispatch(Memcached__libmemcached ptr, Memcached__libmemcached__batch batch)
 
 void
-memcached_batch_get(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key))
+memcached_batch_add_get(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key))
 
 void
-memcached_batch_get_by_key(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), lmc_key master_key, size_t length(master_key))
+memcached_batch_add_get_by_key(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), lmc_key master_key, size_t length(master_key))
 
 void
-memcached_batch_get_by_hash(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), unsigned int hash)
+memcached_batch_add_get_by_hash(Memcached__libmemcached__batch ptr, lmc_key key, size_t length(key), unsigned int hash)
 
 uint32_t
 memcached_generate_hash(Memcached__libmemcached ptr, lmc_key key, size_t length(key))
@@ -845,15 +845,15 @@ get_multi(Memcached__libmemcached ptr, ...)
                 AV *av = (AV*)SvRV(key_sv);
                 master_key = SvPV(AvARRAY(av)[0], master_key_len);
                 keys[items] = SvPV(AvARRAY(av)[1], key_length[items]);
-                memcached_batch_get_by_key(batch, keys[items], key_length[items], master_key, master_key_len);
+                memcached_batch_add_get_by_key(batch, keys[items], key_length[items], master_key, master_key_len);
             }
             else {
                 keys[items] = SvPV(key_sv, key_length[items]);
-                memcached_batch_get(batch, keys[items], key_length[items]);
+                memcached_batch_add_get(batch, keys[items], key_length[items]);
             }
         }
 
-        ret = memcached_mget_batch(ptr, batch);
+        ret = memcached_batch_dispatch(ptr, batch);
         memcached_batch_free(batch);
 
         _fetch_all_into_hashref(ptr, ret, hv);

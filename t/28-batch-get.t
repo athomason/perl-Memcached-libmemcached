@@ -12,12 +12,12 @@ use Memcached::libmemcached
     qw(
         memcached_batch_create
         memcached_batch_create_sized
-        memcached_batch_get
-        memcached_batch_get_by_hash
-        memcached_batch_get_by_key
+        memcached_batch_add_get
+        memcached_batch_add_get_by_hash
+        memcached_batch_add_get_by_key
+        memcached_batch_dispatch
         memcached_batch_free
         memcached_generate_hash
-        memcached_mget_batch
     ),
     #   other functions used by the tests
     qw(
@@ -56,12 +56,12 @@ ok $batch, 'memcached_batch_create';
 is ref $batch, 'Memcached::libmemcached::batch', '$batch ISA Memcached::libmemcached::batch';
 
 for my $k1 (keys %data) {
-    memcached_batch_get($batch, $k1);
-    memcached_batch_get_by_key($batch, $k1 . '_by_key', $m1);
-    memcached_batch_get_by_hash($batch, $k1 . '_by_hash', $m2h);
+    memcached_batch_add_get($batch, $k1);
+    memcached_batch_add_get_by_key($batch, $k1 . '_by_key', $m1);
+    memcached_batch_add_get_by_hash($batch, $k1 . '_by_hash', $m2h);
 }
 
-memcached_mget_batch($memc, $batch);
+memcached_batch_dispatch($memc, $batch);
 memcached_batch_free($batch);
 
 my %got;
