@@ -16,9 +16,11 @@
 #define LIBMEMCACHEDPP_H
 
 #include <libmemcached/memcached.h>
+#include <libmemcached/exception.hpp>
 
 #include <string.h>
 
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
@@ -36,15 +38,49 @@ public:
 
   Memcache() 
     : 
+      servers_list(),
       memc(),
+      servers(NULL),
       result()
   {
     memcached_create(&memc);
   }
 
+  Memcache(const std::string &in_servers_list)
+    :
+      servers_list(in_servers_list),
+      memc(),
+      servers(NULL),
+      result()
+  {
+    memcached_create(&memc);
+    servers= memcached_servers_parse(servers_list.c_str());
+    memcached_server_push(&memc, servers);
+  }
+
+  Memcache(const std::string &hostname,
+           unsigned int port)
+    :
+      servers_list(),
+      memc(),
+      servers(NULL),
+      result()
+  {
+    memcached_create(&memc);
+    servers_list.append(hostname);
+    servers_list.append(":");
+    std::ostringstream strsmt;
+    strsmt << port;
+    servers_list.append(strsmt.str());
+    servers= memcached_servers_parse(servers_list.c_str());
+    memcached_server_push(&memc, servers);
+  }
+
   Memcache(memcached_st *clone) 
     : 
+      servers_list(),
       memc(),
+      servers(NULL),
       result()
   {
     memcached_clone(&memc, clone);
@@ -52,15 +88,31 @@ public:
 
   Memcache(const Memcache &rhs)
     :
+      servers_list(rhs.servers_list),
       memc(),
+      servers(NULL),
       result()
   {
     memcached_clone(&memc, const_cast<memcached_st *>(&rhs.getImpl()));
+    servers= memcached_servers_parse(servers_list.c_str());
+    memcached_server_push(&memc, servers);
+  }
+
+  Memcache &operator=(const Memcache &rhs)
+  {
+    if (this != &rhs)
+    {
+      memcached_clone(&memc, const_cast<memcached_st *>(&rhs.getImpl()));
+      servers= memcached_servers_parse(servers_list.c_str());
+      memcached_server_push(&memc, servers);
+    }
+    return *this;
   }
 
   ~Memcache()
   {
     memcached_free(&memc);
+    memcached_server_list_free(servers);
   }
 
   /**
@@ -92,6 +144,76 @@ public:
   }
 
   /**
+   * Return the string which contains the list of memcached servers being
+   * used.
+   *
+   * @return a std::string containing the list of memcached servers
+   */
+  const std::string getServersList() const
+  {
+    return servers_list;
+  }
+
+  /**
+   * Set the list of memcached servers to use.
+   *
+   * @param[in] in_servers_list list of servers
+   * @return true on success; false otherwise
+   */
+  bool setServers(const std::string &in_servers_list)
+  {
+    servers_list.assign(in_servers_list);
+    servers= memcached_servers_parse(in_servers_list.c_str());
+    memcached_server_push(&memc, servers);
+    return (servers == NULL);
+  }
+
+  /**
+   * Add a server to the list of memcached servers to use.
+   *
+   * @param[in] server_name name of the server to add
+   * @param[in] port port number of server to add
+   * @return true on success; false otherwise
+   */
+  bool addServer(const std::string &server_name, unsigned int port)
+  {
+    memcached_return rc;
+    std::ostringstream strstm;
+    servers_list.append(",");
+    servers_list.append(server_name);
+    servers_list.append(":");
+    strstm << port;
+    servers_list.append(strstm.str());
+    servers= memcached_server_list_append(servers,
+                                          server_name.c_str(),
+                                          port,
+                                          &rc);
+    memcached_server_push(&memc, servers);
+    return (rc == MEMCACHED_SUCCESS);
+  }
+
+  /**
+   * Remove a server from the list of memcached servers to use.
+   *
+   * @param[in] server_name name of the server to remove
+   * @param[in] port port number of server to remove
+   * @return true on success; false otherwise
+   */
+  bool removeServer(const std::string &server_name, size_t port)
+  {
+    std::string tmp_str;
+    std::ostringstream strstm;
+    tmp_str.append(",");
+    tmp_str.append(server_name);
+    tmp_str.append(":");
+    strstm << port;
+    tmp_str.append(strstm.str());
+    memcached_server_st *server= memcached_servers_parse(tmp_str.c_str());
+    memcached_return rc= memcached_server_remove(server);
+    return (rc == MEMCACHED_SUCCESS);
+  }
+
+  /**
    * Fetches an individual value from the server. mget() must always
    * be called before using this method.
    *
@@ -114,7 +236,13 @@ public:
       ret_val.reserve(value_length);
       ret_val.assign(value, value + value_length);
       key.assign(ret_key);
+      free(value);
     }
+    else if (value)
+    {
+      free(value);
+    }
+
     return rc;
   }
 
@@ -127,7 +255,7 @@ public:
    * @return true on success; false otherwise
    */
   bool get(const std::string &key, 
-           std::vector<char> &ret_val)
+           std::vector<char> &ret_val) throw (Error)
   {
     uint32_t flags= 0;
     memcached_return rc;
@@ -135,7 +263,7 @@ public:
 
     if (key.empty())
     {
-      return false;
+      throw(Error("the key supplied is empty!", false));
     }
     char *value= memcached_get(&memc, key.c_str(), key.length(),
                                &value_length, &flags, &rc);
@@ -143,6 +271,7 @@ public:
     {
       ret_val.reserve(value_length);
       ret_val.assign(value, value + value_length);
+      free(value);
       return true;
     }
     return false;
@@ -162,7 +291,7 @@ public:
    */
   bool getByKey(const std::string &master_key, 
                 const std::string &key, 
-                std::vector<char> &ret_val)
+                std::vector<char> &ret_val) throw(Error)
   {
     uint32_t flags= 0;
     memcached_return rc;
@@ -170,16 +299,17 @@ public:
 
     if (master_key.empty() || key.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
-    char *value= memcached_get_by_key(&memc, 
-                                      master_key.c_str(), master_key.length(), 
+    char *value= memcached_get_by_key(&memc,
+                                      master_key.c_str(), master_key.length(),
                                       key.c_str(), key.length(),
                                       &value_length, &flags, &rc);
     if (value)
     {
       ret_val.reserve(value_length);
       ret_val.assign(value, value + value_length);
+      free(value);
       return true;
     }
     return false;
@@ -239,16 +369,16 @@ public:
    * @param[in] flags flags to store with the object
    * @return true on succcess; false otherwise
    */
-  bool set(const std::string &key, 
+  bool set(const std::string &key,
            const std::vector<char> &value,
            time_t expiration,
-           uint32_t flags)
+           uint32_t flags) throw(Error)
   {
     if (key.empty() || value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
-    memcached_return rc= memcached_set(&memc, 
+    memcached_return rc= memcached_set(&memc,
                                        key.c_str(), key.length(),
                                        &value[0], value.size(),
                                        expiration, flags);
@@ -270,13 +400,13 @@ public:
                 const std::string &key, 
                 const std::vector<char> &value,
                 time_t expiration,
-                uint32_t flags)
+                uint32_t flags) throw(Error)
   {
     if (master_key.empty() ||
         key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_set_by_key(&memc, master_key.c_str(), 
                                               master_key.length(),
@@ -300,11 +430,11 @@ public:
   bool setAll(std::vector<std::string> &keys,
               std::vector< std::vector<char> *> &values,
               time_t expiration,
-              uint32_t flags)
+              uint32_t flags) throw(Error)
   {
     if (keys.size() != values.size())
     {
-      return false;
+      throw(Error("The number of keys and values do not match!", false));
     }
     bool retval= true;
     std::vector<std::string>::iterator key_it= keys.begin();
@@ -333,11 +463,11 @@ public:
    */
   bool setAll(std::map<const std::string, std::vector<char> > &key_value_map,
               time_t expiration,
-              uint32_t flags)
+              uint32_t flags) throw(Error)
   {
     if (key_value_map.empty())
     {
-      return false;
+      throw(Error("The key/values are not properly set!", false));
     }
     bool retval= true;
     std::map<const std::string, std::vector<char> >::iterator it=
@@ -347,7 +477,9 @@ public:
       retval= set(it->first, it->second, expiration, flags);
       if (retval == false)
       {
-        return false;
+        std::string err_buff("There was an error setting the key ");
+        err_buff.append(it->first);
+        throw(Error(err_buff, false));
       }
       ++it;
     }
@@ -364,11 +496,11 @@ public:
    * @param[out] value store the result of the increment here
    * @return true on success; false otherwise
    */
-  bool increment(const std::string &key, uint32_t offset, uint64_t *value)
+  bool increment(const std::string &key, uint32_t offset, uint64_t *value) throw(Error)
   {
     if (key.empty())
     {
-      return false;
+      throw(Error("the key supplied is empty!", false));
     }
     memcached_return rc= memcached_increment(&memc, key.c_str(), key.length(),
                                              offset, value);
@@ -386,10 +518,11 @@ public:
    * @return true on success; false otherwise
    */
   bool decrement(const std::string &key, uint32_t offset, uint64_t *value)
+    throw(Error)
   {
     if (key.empty())
     {
-      return false;
+      throw(Error("the key supplied is empty!", false));
     }
     memcached_return rc= memcached_decrement(&memc, key.c_str(), 
                                              key.length(),
@@ -407,10 +540,11 @@ public:
    * @return true on success; false otherwise
    */
   bool add(const std::string &key, const std::vector<char> &value)
+    throw(Error)
   {
     if (key.empty() || value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_add(&memc, key.c_str(), key.length(), 
                                        &value[0], value.size(), 0, 0);
@@ -429,13 +563,13 @@ public:
    */
   bool addByKey(const std::string &master_key, 
                 const std::string &key, 
-                const std::vector<char> &value)
+                const std::vector<char> &value) throw(Error)
   {
     if (master_key.empty() ||
         key.empty() || 
         value.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
     memcached_return rc= memcached_add_by_key(&memc, 
                                               master_key.c_str(),
@@ -456,12 +590,12 @@ public:
    * @param[in[ value value to replace object with
    * @return true on success; false otherwise
    */
-  bool replace(const std::string &key, const std::vector<char> &value)
+  bool replace(const std::string &key, const std::vector<char> &value) throw(Error)
   {
     if (key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_replace(&memc, key.c_str(), key.length(),
                                            &value[0], value.size(),
@@ -487,7 +621,7 @@ public:
         key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
     memcached_return rc= memcached_replace_by_key(&memc, 
                                                   master_key.c_str(), 
@@ -508,10 +642,11 @@ public:
    * @return true on success; false otherwise
    */
   bool prepend(const std::string &key, const std::vector<char> &value)
+    throw(Error)
   {
     if (key.empty() || value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_prepend(&memc, key.c_str(), key.length(),
                                            &value[0], value.size(), 0, 0);
@@ -531,19 +666,20 @@ public:
   bool prependByKey(const std::string &master_key, 
                     const std::string &key, 
                     const std::vector<char> &value)
+      throw(Error)
   {
     if (master_key.empty() ||
         key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
-    memcached_return rc= memcached_prepend_by_key(&memc, 
-                                                  master_key.c_str(), 
+    memcached_return rc= memcached_prepend_by_key(&memc,
+                                                  master_key.c_str(),
                                                   master_key.length(),
-                                                  key.c_str(), 
+                                                  key.c_str(),
                                                   key.length(),
-                                                  &value[0], 
+                                                  &value[0],
                                                   value.size(),
                                                   0,
                                                   0);
@@ -558,16 +694,17 @@ public:
    * @return true on success; false otherwise
    */
   bool append(const std::string &key, const std::vector<char> &value)
+    throw(Error)
   {
     if (key.empty() || value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
-    memcached_return rc= memcached_append(&memc, 
-                                          key.c_str(), 
+    memcached_return rc= memcached_append(&memc,
+                                          key.c_str(),
                                           key.length(),
-                                          &value[0], 
-                                          value.size(), 
+                                          &value[0],
+                                          value.size(),
                                           0, 0);
     return (rc == MEMCACHED_SUCCESS);
   }
@@ -582,15 +719,16 @@ public:
    * @param[in] value data to append to object's value
    * @return true on success; false otherwise
    */
-  bool appendByKey(const std::string &master_key, 
-                   const std::string &key, 
+  bool appendByKey(const std::string &master_key,
+                   const std::string &key,
                    const std::vector<char> &value)
+    throw(Error)
   {
     if (master_key.empty() ||
         key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
     memcached_return rc= memcached_append_by_key(&memc,
                                                  master_key.c_str(), 
@@ -613,11 +751,11 @@ public:
    */
   bool cas(const std::string &key, 
            const std::vector<char> &value, 
-           uint64_t cas_arg)
+           uint64_t cas_arg) throw(Error)
   {
     if (key.empty() || value.empty())
     {
-      return false;
+      throw(Error("the key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_cas(&memc, key.c_str(), key.length(),
                                        &value[0], value.size(), 
@@ -638,13 +776,13 @@ public:
   bool casByKey(const std::string &master_key, 
                 const std::string &key, 
                 const std::vector<char> &value, 
-                uint64_t cas_arg)
+                uint64_t cas_arg) throw(Error)
   {
     if (master_key.empty() ||
         key.empty() ||
         value.empty())
     {
-      return false;
+      throw(Error("the master key, key or value supplied is empty!", false));
     }
     memcached_return rc= memcached_cas_by_key(&memc,
                                               master_key.c_str(), 
@@ -663,11 +801,11 @@ public:
    * @param[in] key key of object to delete
    * @return true on success; false otherwise
    */
-  bool remove(const std::string &key)
+  bool remove(const std::string &key) throw(Error)
   {
     if (key.empty())
     {
-      return false;
+      throw(Error("the key supplied is empty!", false));
     }
     memcached_return rc= memcached_delete(&memc, key.c_str(), key.length(), 0);
     return (rc == MEMCACHED_SUCCESS);
@@ -681,15 +819,15 @@ public:
    * @return true on success; false otherwise
    */
   bool remove(const std::string &key,
-              time_t expiration)
+              time_t expiration) throw(Error)
   {
     if (key.empty())
     {
-      return false;
+      throw(Error("the key supplied is empty!", false));
     }
-    memcached_return rc= memcached_delete(&memc, 
-                                          key.c_str(), 
-                                          key.length(), 
+    memcached_return rc= memcached_delete(&memc,
+                                          key.c_str(),
+                                          key.length(),
                                           expiration);
     return (rc == MEMCACHED_SUCCESS);
   }
@@ -701,18 +839,18 @@ public:
    * @param[in] key key of object to delete
    * @return true on success; false otherwise
    */
-  bool removeByKey(const std::string &master_key, 
-                   const std::string &key)
+  bool removeByKey(const std::string &master_key,
+                   const std::string &key) throw(Error)
   {
     if (master_key.empty() || key.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
-    memcached_return rc= memcached_delete_by_key(&memc, 
-                                                 master_key.c_str(), 
+    memcached_return rc= memcached_delete_by_key(&memc,
+                                                 master_key.c_str(),
                                                  master_key.length(),
-                                                 key.c_str(), 
-                                                 key.length(), 
+                                                 key.c_str(),
+                                                 key.length(),
                                                  0);
     return (rc == MEMCACHED_SUCCESS);
   }
@@ -727,11 +865,11 @@ public:
    */
   bool removeByKey(const std::string &master_key, 
                    const std::string &key,
-                   time_t expiration)
+                   time_t expiration) throw(Error)
   {
     if (master_key.empty() || key.empty())
     {
-      return false;
+      throw(Error("the master key or key supplied is empty!", false));
     }
     memcached_return rc= memcached_delete_by_key(&memc, 
                                                  master_key.c_str(), 
@@ -787,9 +925,65 @@ public:
     return version;
   }
 
+  /**
+   * Retrieve memcached statistics. Populate a std::map with the retrieved
+   * stats. Each server will map to another std::map of the key:value stats.
+   *
+   * @param[out] stats_map a std::map to be populated with the memcached
+   *                       stats
+   * @return true on success; false otherwise
+   */
+  bool getStats(std::map< std::string, std::map<std::string, std::string> >
+                &stats_map)
+  {
+    memcached_return rc;
+    memcached_stat_st *stats= memcached_stat(&memc, NULL, &rc);
+
+    if (rc != MEMCACHED_SUCCESS &&
+        rc != MEMCACHED_SOME_ERRORS)
+    {
+      return false;
+    }
+
+    uint32_t server_count= memcached_server_count(&memc);
+
+    /*
+     * For each memcached server, construct a std::map for its stats and add
+     * it to the std::map of overall stats.
+     */
+    for (uint32_t x= 0; x < server_count; x++)
+    {
+      std::ostringstream strstm;
+      std::string server_name(memcached_server_name(&memc, servers[x]));
+      server_name.append(":");
+      strstm << memcached_server_port(&memc, servers[x]);
+      server_name.append(strstm.str());
+
+      std::map<std::string, std::string> server_stats;
+      char **list= NULL;
+      char **ptr= NULL;
+
+      list= memcached_stat_get_keys(&memc, &stats[x], &rc);
+      for (ptr= list; *ptr; ptr++)
+      {
+        char *value= memcached_stat_get_value(&memc, &stats[x], *ptr, &rc);
+        server_stats[*ptr]= value;
+        free(value);
+      }
+      
+      stats_map[server_name]= server_stats;
+      free(list);
+    }
+
+    memcached_stat_free(&memc, stats);
+    return true;
+  }
+
 private:
 
+  std::string servers_list;
   memcached_st memc;
+  memcached_server_st *servers;
   memcached_result_st result;
 };
 

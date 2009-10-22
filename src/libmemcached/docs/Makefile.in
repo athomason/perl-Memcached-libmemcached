@@ -33,6 +33,8 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = libmemcachedutil.3 \
+@BUILD_LIBMEMCACHEDUTIL_TRUE@	memcached_pool_behavior_set.3 \
+@BUILD_LIBMEMCACHEDUTIL_TRUE@	memcached_pool_behavior_get.3 \
 @BUILD_LIBMEMCACHEDUTIL_TRUE@	memcached_pool_create.3 \
 @BUILD_LIBMEMCACHEDUTIL_TRUE@	memcached_pool_destroy.3 \
 @BUILD_LIBMEMCACHEDUTIL_TRUE@	memcached_pool_push.3 \
@@ -45,8 +47,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
 	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
 	$(top_srcdir)/m4/deprecated.m4 \
-	$(top_srcdir)/m4/enable_utillib.m4 \
-	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/lib-ld.m4 $(top_srcdir)/m4/lib-link.m4 \
 	$(top_srcdir)/m4/lib-prefix.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
@@ -57,11 +59,15 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
 	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
 	$(top_srcdir)/m4/pandora_ensure_gcc_version.m4 \
+	$(top_srcdir)/m4/pandora_extensions.m4 \
 	$(top_srcdir)/m4/pandora_have_better_malloc.m4 \
+	$(top_srcdir)/m4/pandora_have_innodb.m4 \
 	$(top_srcdir)/m4/pandora_header_assert.m4 \
 	$(top_srcdir)/m4/pandora_libtool.m4 \
 	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_platform.m4 \
 	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_use_pipe.m4 \
 	$(top_srcdir)/m4/pandora_vc_build.m4 \
 	$(top_srcdir)/m4/pandora_warnings.m4 \
 	$(top_srcdir)/m4/pod2man.m4 \
@@ -120,7 +126,9 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_LIBINNODB = @HAVE_LIBINNODB@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+INNOBASE_SKIP_WARNINGS = @INNOBASE_SKIP_WARNINGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -129,17 +137,22 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 ISAINFO = @ISAINFO@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LD_PROTOCOL_VERSION_SCRIPT = @LD_PROTOCOL_VERSION_SCRIPT@
 LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
 LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
 LIBC_P = @LIBC_P@
+LIBINNODB = @LIBINNODB@
+LIBINNODB_PREFIX = @LIBINNODB_PREFIX@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBINNODB = @LTLIBINNODB@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MEMCACHEDPROTOCOL_LIBRARY_VERSION = @MEMCACHEDPROTOCOL_LIBRARY_VERSION@
 MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
 MEMC_BINARY = @MEMC_BINARY@
@@ -151,6 +164,7 @@ NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
 NO_SHADOW = @NO_SHADOW@
 NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
 NO_UNREACHED = @NO_UNREACHED@
+NO_WERROR = @NO_WERROR@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -173,6 +187,10 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TARGET_FREEBSD = @TARGET_FREEBSD@
+TARGET_LINUX = @TARGET_LINUX@
+TARGET_OSX = @TARGET_OSX@
+TARGET_SOLARIS = @TARGET_SOLARIS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -251,6 +269,7 @@ EXTRA_DIST = libmemcached.pod\
 	memcached_behavior.pod\
 	memcached_callback.pod\
 	memcached_server_st.pod\
+        memcapable.pod \
 	memcat.pod\
 	memcached_create.pod\
 	memcached_pool.pod\
@@ -267,27 +286,28 @@ EXTRA_DIST = libmemcached.pod\
         memcached_memory_allocators.pod\
         memcached_user_data.pod
 
-man_MANS = libmemcached.3 libmemcached_examples.3 memcat.1 memcp.1 \
-	memerror.1 memflush.1 memdump.1 memrm.1 memslap.1 memstat.1 \
-	memcached_add.3 memcached_add_by_key.3 memcached_append.3 \
-	memcached_append_by_key.3 memcached_analyze.3 \
-	memcached_behavior_get.3 memcached_behavior_set.3 \
-	memcached_callback_get.3 memcached_callback_set.3 \
-	memcached_cas.3 memcached_cas_by_key.3 memcached_clone.3 \
-	memcached_create.3 memcached_decrement.3 \
-	memcached_decrement_with_initial.3 memcached_delete.3 \
-	memcached_delete_by_key.3 memcached_fetch.3 \
+man_MANS = libmemcached.3 libmemcached_examples.3 memcapable.1 \
+	memcat.1 memcp.1 memerror.1 memflush.1 memdump.1 memrm.1 \
+	memslap.1 memstat.1 memcached_add.3 memcached_add_by_key.3 \
+	memcached_append.3 memcached_append_by_key.3 \
+	memcached_analyze.3 memcached_behavior_get.3 \
+	memcached_behavior_set.3 memcached_callback_get.3 \
+	memcached_callback_set.3 memcached_cas.3 \
+	memcached_cas_by_key.3 memcached_clone.3 memcached_create.3 \
+	memcached_decrement.3 memcached_decrement_with_initial.3 \
+	memcached_delete.3 memcached_delete_by_key.3 memcached_fetch.3 \
 	memcached_fetch_execute.3 memcached_fetch_result.3 \
 	memcached_free.3 memcached_get.3 memcached_get_by_key.3 \
 	memcached_increment.3 memcached_increment_with_initial.3 \
-	memcached_mget.3 memcached_mget_by_key.3 memcached_prepend.3 \
-	memcached_prepend_by_key.3 memcached_replace.3 \
-	memcached_replace_by_key.3 memcached_server_add.3 \
-	memcached_server_count.3 memcached_server_list.3 \
-	memcached_server_list_append.3 memcached_server_list_count.3 \
-	memcached_server_list_free.3 memcached_server_push.3 \
-	memcached_servers_parse.3 memcached_set.3 \
-	memcached_set_by_key.3 memcached_stat.3 \
+	memcached_mget.3 memcached_mget_by_key.3 \
+	memcached_mget_execute.3 memcached_mget_execute_by_key.3 \
+	memcached_prepend.3 memcached_prepend_by_key.3 \
+	memcached_replace.3 memcached_replace_by_key.3 \
+	memcached_server_add.3 memcached_server_count.3 \
+	memcached_server_list.3 memcached_server_list_append.3 \
+	memcached_server_list_count.3 memcached_server_list_free.3 \
+	memcached_server_push.3 memcached_servers_parse.3 \
+	memcached_set.3 memcached_set_by_key.3 memcached_stat.3 \
 	memcached_stat_get_keys.3 memcached_stat_get_value.3 \
 	memcached_stat_servername.3 memcached_strerror.3 \
 	memcached_quit.3 memcached_verbosity.3 memcached_lib_version.3 \
@@ -563,16 +583,16 @@ uninstall-man: uninstall-man1 uninstall-man3
 	uninstall-man3
 
 
-libmemcached.3: libmemcached.pod 
+libmemcached.3: libmemcached.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/libmemcached.pod > libmemcached.3
 
-libmemcachedutil.3: libmemcachedutil.pod 
+libmemcachedutil.3: libmemcachedutil.pod
 	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/libmemcachedutil.pod > libmemcachedutil.3
 
 libmemcached_examples.3: libmemcached_examples.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/libmemcached_examples.pod > libmemcached_examples.3
 
-memcached_create.3: memcached_create.pod 
+memcached_create.3: memcached_create.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_create.pod > memcached_create.3
 
 memcached_free.3: memcached_create.pod
@@ -658,6 +678,12 @@ memcached_mget.3: memcached_get.pod
 
 memcached_mget_by_key.3: memcached_get.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_get.pod > memcached_mget_by_key.3
+
+memcached_mget_execute.3: memcached_get.pod
+	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_get.pod > memcached_mget_execute.3
+
+memcached_mget_execute_by_key.3: memcached_get.pod
+	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_get.pod > memcached_mget_execute_by_key.3
 
 memcached_fetch.3: memcached_get.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_get.pod > memcached_fetch.3
@@ -776,16 +802,22 @@ memcached_get_user_data.3: memcached_user_data.pod
 memcached_set_user_data.3: memcached_user_data.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 3 ${top_srcdir}/docs/memcached_user_data.pod > memcached_set_user_data.3
 
-memcached_pool_create.3: memcached_pool.pod 
+memcached_pool_behavior_get.3: memcached_pool.pod
+	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_behavior_get.3
+
+memcached_pool_behavior_set.3: memcached_pool.pod
+	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_behavior_set.3
+
+memcached_pool_create.3: memcached_pool.pod
 	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_create.3
 
-memcached_pool_destroy.3: memcached_pool.pod 
+memcached_pool_destroy.3: memcached_pool.pod
 	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_destroy.3
 
-memcached_pool_pop.3: memcached_pool.pod 
+memcached_pool_pop.3: memcached_pool.pod
 	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_pop.3
 
-memcached_pool_push.3: memcached_pool.pod 
+memcached_pool_push.3: memcached_pool.pod
 	${POD2MAN} -c "libmemcachedutil" -r "" -s 3 ${top_srcdir}/docs/memcached_pool.pod > memcached_pool_push.3
 
 memcp.1: memcp.pod
@@ -793,6 +825,9 @@ memcp.1: memcp.pod
 
 memslap.1: memslap.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 1 ${top_srcdir}/docs/memslap.pod > memslap.1
+
+memcapable.1: memcapable.pod
+	${POD2MAN} -c "libmemcached" -r "" -s 1 ${top_srcdir}/docs/memcapable.pod > memcapable.1
 
 memcat.1: memcat.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 1 ${top_srcdir}/docs/memcat.pod > memcat.1
@@ -812,7 +847,7 @@ memdump.1: memdump.pod
 memflush.1: memflush.pod
 	${POD2MAN} -c "libmemcached" -r "" -s 1 ${top_srcdir}/docs/memflush.pod > memflush.1
 
-test: 
+test:
 	podchecker $(top_srcdir)/docs/libmemcached.pod
 	podchecker $(top_srcdir)/docs/memcached_flush.pod
 	podchecker $(top_srcdir)/docs/memcached_stats.pod
@@ -841,6 +876,7 @@ test:
 	podchecker $(top_srcdir)/docs/memcached_pool.pod
 	podchecker $(top_srcdir)/docs/memcached_memory_allocators.pod
 	podchecker $(top_srcdir)/docs/memcached_user_data.pod
+	podchecker $(top_srcdir)/docs/memcapable.pod
 
 html-local:
 	pod2htmltree "/libmemcached" .

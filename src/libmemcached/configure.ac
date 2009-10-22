@@ -1,4 +1,4 @@
-# libmemcached 
+# libmemcached
 # Copyright (C) 2008 Brian Aker, Monty Taylor
 # All rights reserved.
 #
@@ -6,7 +6,7 @@
 # the COPYING file in this directory for full text.
 
 AC_PREREQ(2.59)
-AC_INIT([libmemcached],[0.31],[http://tangent.org/552/libmemcached.html])
+AC_INIT([libmemcached],[0.34],[http://tangent.org/552/libmemcached.html])
 AC_CONFIG_SRCDIR([libmemcached/memcached.c])
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER([config.h])
@@ -15,7 +15,7 @@ AC_CONFIG_MACRO_DIR([m4])
 PANDORA_CANONICAL_TARGET
 
 #shared library versioning
-MEMCACHED_LIBRARY_VERSION=2:0:0
+MEMCACHED_LIBRARY_VERSION=3:0:0
 #                         | | |
 #                  +------+ | +---+
 #                  |        |     |
@@ -29,16 +29,20 @@ MEMCACHED_LIBRARY_VERSION=2:0:0
 AC_SUBST(MEMCACHED_LIBRARY_VERSION)
 MEMCACHEDUTIL_LIBRARY_VERSION=0:0:0
 AC_SUBST(MEMCACHEDUTIL_LIBRARY_VERSION)
+MEMCACHEDPROTOCOL_LIBRARY_VERSION=0:0:0
+AC_SUBST(MEMCACHEDPROTOCOL_LIBRARY_VERSION)
 
 
 # libmemcached versioning when linked with GNU ld.
 if test "$lt_cv_prog_gnu_ld" = "yes"
 then
     LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcached/libmemcached.ver"
-    LD_UTIL_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcachedutil/libmemcachedutil.ver"
+    LD_UTIL_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcached/util/libmemcachedutil.ver"
+    LD_PROTOCOL_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libmemcached/protocol/libmemcachedprotocol.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 AC_SUBST(LD_UTIL_VERSION_SCRIPT)
+AC_SUBST(LD_PROTOCOL_VERSION_SCRIPT)
 
 
 #--------------------------------------------------------------------
@@ -65,7 +69,7 @@ AC_LINK_IFELSE(
       float f= floorf((float) 1.0);
     ]],
     [LIBM="-lm"],[LIBM=""])])
-    
+
 AC_SUBST(LIBM)
 LIBS="$save_LIBS"
 
@@ -80,16 +84,16 @@ REQUIRE_POD2MAN
 PROTOCOL_BINARY_TEST
 WITH_MEMCACHED
 ENABLE_DEPRECATED
-
+PANDORA_HAVE_LIBINNODB
 
 AC_CONFIG_FILES([
   Makefile
   clients/Makefile
   tests/Makefile
   docs/Makefile
+  example/Makefile
   libmemcached/Makefile
   libmemcached/memcached_configure.h
-  libmemcachedutil/Makefile
   support/Makefile
   support/libmemcached.pc
   support/libmemcached.spec

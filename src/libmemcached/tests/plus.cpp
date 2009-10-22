@@ -17,16 +17,17 @@
 #include "test.h"
 
 #include <string>
+#include <iostream>
 
 using namespace std;
 using namespace memcache;
 
 extern "C" {
-   test_return basic_test(memcached_st *memc);
-   test_return increment_test(memcached_st *memc);
-   test_return basic_master_key_test(memcached_st *memc);
-   test_return mget_result_function(memcached_st *memc);
-   test_return mget_test(memcached_st *memc);
+   test_return_t basic_test(memcached_st *memc);
+   test_return_t increment_test(memcached_st *memc);
+   test_return_t basic_master_key_test(memcached_st *memc);
+   test_return_t mget_result_function(memcached_st *memc);
+   test_return_t mget_test(memcached_st *memc);
    memcached_return callback_counter(memcached_st *,
                                      memcached_result_st *, 
                                      void *context);
@@ -49,7 +50,7 @@ static void copy_vec_to_string(vector<char> &vec, string &str)
   }
 }
 
-test_return basic_test(memcached_st *memc)
+test_return_t basic_test(memcached_st *memc)
 {
   Memcache foo(memc);
   const string value_set("This is some data");
@@ -63,10 +64,23 @@ test_return basic_test(memcached_st *memc)
 
   assert((memcmp(&test_value[0], &value[0], test_value.size()) == 0));
 
-  return TEST_SUCCESS;
+  /* 
+   * Simple test of the exceptions here...this should throw an exception
+   * saying that the key is empty.
+   */
+  try
+  {
+    foo.set("", value, 0, 0);
+  }
+  catch (Error &err)
+  {
+    return TEST_SUCCESS;
+  }
+
+  return TEST_FAILURE;
 }
 
-test_return increment_test(memcached_st *memc)
+test_return_t increment_test(memcached_st *memc)
 {
   Memcache mcach(memc);
   bool rc;
@@ -111,7 +125,7 @@ test_return increment_test(memcached_st *memc)
   return TEST_SUCCESS;
 }
 
-test_return basic_master_key_test(memcached_st *memc)
+test_return_t basic_master_key_test(memcached_st *memc)
 {
   Memcache foo(memc);
   const string value_set("Data for server A");
@@ -148,7 +162,7 @@ memcached_return callback_counter(memcached_st *,
   return MEMCACHED_SUCCESS;
 }
 
-test_return mget_result_function(memcached_st *memc)
+test_return_t mget_result_function(memcached_st *memc)
 {
   Memcache mc(memc);
   bool rc;
@@ -191,7 +205,7 @@ test_return mget_result_function(memcached_st *memc)
   return TEST_SUCCESS;
 }
 
-test_return mget_test(memcached_st *memc)
+test_return_t mget_test(memcached_st *memc)
 {
   Memcache mc(memc);
   bool rc;

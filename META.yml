@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Memcached-libmemcached
-version:            0.2501
+version:            0.3102
 abstract:           Thin fast full interface to the libmemcached client API
 author:
     - Tim Bunce <Tim.Bunce@pobox.com>

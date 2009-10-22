@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = $(top_builddir)/libmemcachedutil/libmemcachedutil.la
+@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = $(top_builddir)/libmemcached/libmemcachedutil.la
 noinst_PROGRAMS = testapp$(EXEEXT) testplus$(EXEEXT) udptest$(EXEEXT) \
 	atomsmasher$(EXEEXT) startservers$(EXEEXT)
 subdir = tests
@@ -46,8 +46,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
 	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
 	$(top_srcdir)/m4/deprecated.m4 \
-	$(top_srcdir)/m4/enable_utillib.m4 \
-	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/lib-ld.m4 $(top_srcdir)/m4/lib-link.m4 \
 	$(top_srcdir)/m4/lib-prefix.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
@@ -58,11 +58,15 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
 	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
 	$(top_srcdir)/m4/pandora_ensure_gcc_version.m4 \
+	$(top_srcdir)/m4/pandora_extensions.m4 \
 	$(top_srcdir)/m4/pandora_have_better_malloc.m4 \
+	$(top_srcdir)/m4/pandora_have_innodb.m4 \
 	$(top_srcdir)/m4/pandora_header_assert.m4 \
 	$(top_srcdir)/m4/pandora_libtool.m4 \
 	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_platform.m4 \
 	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_use_pipe.m4 \
 	$(top_srcdir)/m4/pandora_vc_build.m4 \
 	$(top_srcdir)/m4/pandora_warnings.m4 \
 	$(top_srcdir)/m4/pod2man.m4 \
@@ -84,24 +88,24 @@ libtest_la_OBJECTS = $(am_libtest_la_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_atomsmasher_OBJECTS = atomsmasher.$(OBJEXT)
 atomsmasher_OBJECTS = $(am_atomsmasher_OBJECTS)
-atomsmasher_DEPENDENCIES = $(LDADDS) \
-	$(top_builddir)/clients/libgenexec.la libtest.la libserver.la
+atomsmasher_DEPENDENCIES = $(top_builddir)/clients/libgenexec.la \
+	libtest.la libserver.la $(LDADDS)
 am_startservers_OBJECTS = start.$(OBJEXT)
 startservers_OBJECTS = $(am_startservers_OBJECTS)
-startservers_DEPENDENCIES = $(LDADDS) libserver.la
+startservers_DEPENDENCIES = libserver.la $(LDADDS)
 am_testapp_OBJECTS = testapp-function.$(OBJEXT)
 testapp_OBJECTS = $(am_testapp_OBJECTS)
-testapp_DEPENDENCIES = $(LDADDS) $(top_builddir)/clients/libgenexec.la \
-	libtest.la libserver.la
+testapp_DEPENDENCIES = $(top_builddir)/clients/libgenexec.la \
+	libtest.la libserver.la $(LDADDS)
 testapp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(testapp_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_testplus_OBJECTS = plus.$(OBJEXT)
 testplus_OBJECTS = $(am_testplus_OBJECTS)
-testplus_DEPENDENCIES = $(LDADDS) libtest.la libserver.la
+testplus_DEPENDENCIES = libtest.la libserver.la $(LDADDS)
 am_udptest_OBJECTS = udp.$(OBJEXT)
 udptest_OBJECTS = $(am_udptest_OBJECTS)
-udptest_DEPENDENCIES = $(LDADDS) libtest.la libserver.la
+udptest_DEPENDENCIES = libtest.la libserver.la $(LDADDS)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -172,7 +176,9 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_LIBINNODB = @HAVE_LIBINNODB@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+INNOBASE_SKIP_WARNINGS = @INNOBASE_SKIP_WARNINGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -181,17 +187,22 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 ISAINFO = @ISAINFO@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LD_PROTOCOL_VERSION_SCRIPT = @LD_PROTOCOL_VERSION_SCRIPT@
 LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
 LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
 LIBC_P = @LIBC_P@
+LIBINNODB = @LIBINNODB@
+LIBINNODB_PREFIX = @LIBINNODB_PREFIX@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = 
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBINNODB = @LTLIBINNODB@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MEMCACHEDPROTOCOL_LIBRARY_VERSION = @MEMCACHEDPROTOCOL_LIBRARY_VERSION@
 MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
 MEMC_BINARY = @MEMC_BINARY@
@@ -203,6 +214,7 @@ NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
 NO_SHADOW = @NO_SHADOW@
 NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
 NO_UNREACHED = @NO_UNREACHED@
+NO_WERROR = @NO_WERROR@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -225,6 +237,10 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TARGET_FREEBSD = @TARGET_FREEBSD@
+TARGET_LINUX = @TARGET_LINUX@
+TARGET_OSX = @TARGET_OSX@
+TARGET_SOLARIS = @TARGET_SOLARIS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -303,15 +319,15 @@ libserver_la_SOURCES = server.c
 libtest_la_SOURCES = test.c
 testapp_CFLAGS = $(AM_CFLAGS) $(NO_CONVERSION) $(NO_STRICT_ALIASING)
 testapp_SOURCES = function.c
-testapp_LDADD = $(LDADDS) $(top_builddir)/clients/libgenexec.la libtest.la libserver.la
+testapp_LDADD = $(top_builddir)/clients/libgenexec.la libtest.la libserver.la $(LDADDS)
 testplus_SOURCES = plus.cpp
-testplus_LDADD = $(LDADDS) libtest.la libserver.la
+testplus_LDADD = libtest.la libserver.la $(LDADDS)
 udptest_SOURCES = udp.c
-udptest_LDADD = $(LDADDS) libtest.la libserver.la
+udptest_LDADD = libtest.la libserver.la $(LDADDS)
 atomsmasher_SOURCES = atomsmasher.c
-atomsmasher_LDADD = $(LDADDS) $(top_builddir)/clients/libgenexec.la libtest.la libserver.la 
+atomsmasher_LDADD = $(top_builddir)/clients/libgenexec.la libtest.la libserver.la $(LDADDS)
 startservers_SOURCES = start.c
-startservers_LDADD = $(LDADDS) libserver.la
+startservers_LDADD = libserver.la $(LDADDS)
 all: all-am
 
 .SUFFIXES:
@@ -654,7 +670,7 @@ client-record:
 record-extended:
 	./testapp extended > output2.res
 
-test: testapp testplus library_test
+test: testapp testplus library_test memcapable
 	echo "Tests completed"
 
 library_test:
@@ -663,8 +679,14 @@ library_test:
 #	./testplus > output_plus.cmp
 #	diff output_plus.res output_plus.cmp
 
+memcapable:
+	@MEMC_BINARY@ -d -P /tmp/Xumemc.pid -p 12555
+	@$(top_builddir)/clients/memcapable -p 12555 || echo "Your memcached server does not support all commands"
+	@cat /tmp/Xumemc.pid | xargs kill || echo "Failed to kill memcached server"
+	@rm /tmp/Xumemc.pid
+
 clients:
-	memcached -d -P /tmp/Xumemc.pid -p 12555
+	@MEMC_BINARY@ -d -P /tmp/Xumemc.pid -p 12555
 	export MEMCACHED_SERVERS="localhost:12555"
 	sh t/memcat.test > r/memcat.cmp
 	diff r/memcat.res r/memcat.cmp

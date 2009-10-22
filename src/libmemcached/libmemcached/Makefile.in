@@ -34,14 +34,18 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = memcached_util.h memcached_pool.h
-@INCLUDE_HSIEH_SRC_TRUE@am__append_2 = hsieh_hash.c
-@BUILD_BYTEORDER_TRUE@am__append_3 = byteorder.c
-@HAVE_DTRACE_TRUE@am__append_4 = dtrace_probes.h
-@HAVE_DTRACE_TRUE@am__append_5 = libmemcached_probes.d
-@DTRACE_NEEDS_OBJECTS_TRUE@am__append_6 = libmemcached_probes.o
+@INCLUDE_HSIEH_SRC_TRUE@am__append_1 = hsieh_hash.c
+@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_2 = memcached_util.h memcached_pool.h
+@BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_3 = libmemcachedutil.la
+@BUILD_BYTEORDER_TRUE@am__append_4 = libbyteorder.la
+@BUILD_BYTEORDER_TRUE@am__append_5 = libbyteorder.la
+@BUILD_BYTEORDER_TRUE@am__append_6 = libbyteorder.la
+@HAVE_DTRACE_TRUE@am__append_7 = dtrace_probes.h
+@HAVE_DTRACE_TRUE@am__append_8 = libmemcached_probes.d
+@DTRACE_NEEDS_OBJECTS_TRUE@am__append_9 = libmemcached_probes.o
 subdir = libmemcached
-DIST_COMMON = $(am__pkginclude_HEADERS_DIST) $(noinst_HEADERS) \
+DIST_COMMON = $(am__pkginclude_HEADERS_DIST) \
+	$(nobase_pkginclude_HEADERS) $(noinst_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/memcached_configure.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -49,8 +53,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/ac_cxx_header_stdcxx_98.m4 \
 	$(top_srcdir)/m4/acx_pthread.m4 $(top_srcdir)/m4/byteorder.m4 \
 	$(top_srcdir)/m4/deprecated.m4 \
-	$(top_srcdir)/m4/enable_utillib.m4 \
-	$(top_srcdir)/m4/extensions.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/enable_utillib.m4 $(top_srcdir)/m4/hsieh.m4 \
+	$(top_srcdir)/m4/lib-ld.m4 $(top_srcdir)/m4/lib-link.m4 \
 	$(top_srcdir)/m4/lib-prefix.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
@@ -61,11 +65,15 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_cxx_compile_stdcxx_0x.m4 \
 	$(top_srcdir)/m4/pandora_check_cxx_standard.m4 \
 	$(top_srcdir)/m4/pandora_enable_dtrace.m4 \
 	$(top_srcdir)/m4/pandora_ensure_gcc_version.m4 \
+	$(top_srcdir)/m4/pandora_extensions.m4 \
 	$(top_srcdir)/m4/pandora_have_better_malloc.m4 \
+	$(top_srcdir)/m4/pandora_have_innodb.m4 \
 	$(top_srcdir)/m4/pandora_header_assert.m4 \
 	$(top_srcdir)/m4/pandora_libtool.m4 \
 	$(top_srcdir)/m4/pandora_optimize.m4 \
+	$(top_srcdir)/m4/pandora_platform.m4 \
 	$(top_srcdir)/m4/pandora_shared_ptr.m4 \
+	$(top_srcdir)/m4/pandora_use_pipe.m4 \
 	$(top_srcdir)/m4/pandora_vc_build.m4 \
 	$(top_srcdir)/m4/pandora_warnings.m4 \
 	$(top_srcdir)/m4/pod2man.m4 \
@@ -83,9 +91,15 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)" \
+	"$(DESTDIR)$(pkgincludedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
+libbyteorder_la_LIBADD =
+am__libbyteorder_la_SOURCES_DIST = byteorder.c byteorder.h
+@BUILD_BYTEORDER_TRUE@am_libbyteorder_la_OBJECTS = byteorder.lo
+libbyteorder_la_OBJECTS = $(am_libbyteorder_la_OBJECTS)
+@BUILD_BYTEORDER_TRUE@am_libbyteorder_la_rpath =
 am__DEPENDENCIES_1 =
 am__libmemcached_la_SOURCES_DIST = crc.c memcached.c memcached_auto.c \
 	memcached_analyze.c memcached_batch.c memcached_behavior.c \
@@ -98,10 +112,9 @@ am__libmemcached_la_SOURCES_DIST = crc.c memcached.c memcached_auto.c \
 	memcached_storage.c memcached_string.c memcached_stats.c \
 	memcached_strerror.c memcached_verbosity.c memcached_version.c \
 	murmur_hash.c jenkins_hash.c memcached_allocators.c \
-	hsieh_hash.c byteorder.c libmemcached_probes.d
+	hsieh_hash.c libmemcached_probes.d
 @INCLUDE_HSIEH_SRC_TRUE@am__objects_1 = libmemcached_la-hsieh_hash.lo
-@BUILD_BYTEORDER_TRUE@am__objects_2 = libmemcached_la-byteorder.lo
-am__objects_3 =
+am__objects_2 =
 am_libmemcached_la_OBJECTS = libmemcached_la-crc.lo \
 	libmemcached_la-memcached.lo libmemcached_la-memcached_auto.lo \
 	libmemcached_la-memcached_analyze.lo \
@@ -133,7 +146,7 @@ am_libmemcached_la_OBJECTS = libmemcached_la-crc.lo \
 	libmemcached_la-memcached_version.lo \
 	libmemcached_la-murmur_hash.lo libmemcached_la-jenkins_hash.lo \
 	libmemcached_la-memcached_allocators.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3)
+	$(am__objects_2)
 libmemcached_la_OBJECTS = $(am_libmemcached_la_OBJECTS)
 libmemcached_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libmemcached_la_CFLAGS) \
@@ -147,6 +160,22 @@ libmemcachedcallbacks_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libmemcachedcallbacks_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__dirstamp = $(am__leading_dot)dirstamp
+am_libmemcachedprotocol_la_OBJECTS = protocol/ascii_handler.lo \
+	protocol/binary_handler.lo protocol/cache.lo \
+	protocol/pedantic.lo protocol/protocol_handler.lo
+libmemcachedprotocol_la_OBJECTS =  \
+	$(am_libmemcachedprotocol_la_OBJECTS)
+libmemcachedprotocol_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libmemcachedprotocol_la_LDFLAGS) $(LDFLAGS) -o $@
+am_libmemcachedutil_la_OBJECTS = util/memcached_pool.lo
+libmemcachedutil_la_OBJECTS = $(am_libmemcachedutil_la_OBJECTS)
+libmemcachedutil_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libmemcachedutil_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_LIBMEMCACHEDUTIL_TRUE@am_libmemcachedutil_la_rpath = -rpath \
+@BUILD_LIBMEMCACHEDUTIL_TRUE@	$(libdir)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -159,18 +188,25 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libmemcached_la_SOURCES) \
-	$(libmemcachedcallbacks_la_SOURCES)
-DIST_SOURCES = $(am__libmemcached_la_SOURCES_DIST) \
-	$(libmemcachedcallbacks_la_SOURCES)
-am__pkginclude_HEADERS_DIST = memcached.h memcached.hpp \
+SOURCES = $(libbyteorder_la_SOURCES) $(libmemcached_la_SOURCES) \
+	$(libmemcachedcallbacks_la_SOURCES) \
+	$(libmemcachedprotocol_la_SOURCES) \
+	$(libmemcachedutil_la_SOURCES)
+DIST_SOURCES = $(am__libbyteorder_la_SOURCES_DIST) \
+	$(am__libmemcached_la_SOURCES_DIST) \
+	$(libmemcachedcallbacks_la_SOURCES) \
+	$(libmemcachedprotocol_la_SOURCES) \
+	$(libmemcachedutil_la_SOURCES)
+nobase_pkgincludeHEADERS_INSTALL = $(install_sh_DATA)
+am__pkginclude_HEADERS_DIST = memcached.h memcached.hpp exception.hpp \
 	memcached_batch.h memcached_configure.h memcached_constants.h \
 	memcached_get.h memcached_result.h memcached_server.h \
 	memcached_storage.h memcached_string.h memcached_types.h \
-	memcached_watchpoint.h visibility.h memcached_util.h \
-	memcached_pool.h
+	memcached_watchpoint.h protocol_handler.h visibility.h \
+	memcached_util.h memcached_pool.h
 pkgincludeHEADERS_INSTALL = $(INSTALL_HEADER)
-HEADERS = $(noinst_HEADERS) $(pkginclude_HEADERS)
+HEADERS = $(nobase_pkginclude_HEADERS) $(noinst_HEADERS) \
+	$(pkginclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -213,7 +249,9 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_LIBINNODB = @HAVE_LIBINNODB@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+INNOBASE_SKIP_WARNINGS = @INNOBASE_SKIP_WARNINGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -222,17 +260,22 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 ISAINFO = @ISAINFO@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LD_PROTOCOL_VERSION_SCRIPT = @LD_PROTOCOL_VERSION_SCRIPT@
 LD_UTIL_VERSION_SCRIPT = @LD_UTIL_VERSION_SCRIPT@
 LD_VERSION_SCRIPT = @LD_VERSION_SCRIPT@
 LIBC_P = @LIBC_P@
+LIBINNODB = @LIBINNODB@
+LIBINNODB_PREFIX = @LIBINNODB_PREFIX@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBINNODB = @LTLIBINNODB@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MEMCACHEDPROTOCOL_LIBRARY_VERSION = @MEMCACHEDPROTOCOL_LIBRARY_VERSION@
 MEMCACHEDUTIL_LIBRARY_VERSION = @MEMCACHEDUTIL_LIBRARY_VERSION@
 MEMCACHED_LIBRARY_VERSION = @MEMCACHED_LIBRARY_VERSION@
 MEMC_BINARY = @MEMC_BINARY@
@@ -244,6 +287,7 @@ NO_REDUNDANT_DECLS = @NO_REDUNDANT_DECLS@
 NO_SHADOW = @NO_SHADOW@
 NO_STRICT_ALIASING = @NO_STRICT_ALIASING@
 NO_UNREACHED = @NO_UNREACHED@
+NO_WERROR = @NO_WERROR@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -266,6 +310,10 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TARGET_FREEBSD = @TARGET_FREEBSD@
+TARGET_LINUX = @TARGET_LINUX@
+TARGET_OSX = @TARGET_OSX@
+TARGET_SOLARIS = @TARGET_SOLARIS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -325,24 +373,43 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = libmemcached_probes.d memcached/README.txt libmemcached.ver \
-             memcached_configure.h.in
+EXTRA_DIST = libmemcached.ver \
+             libmemcached_probes.d \
+             memcached/README.txt \
+             memcached_configure.h.in \
+             protocol/libmemcachedprotocol.ver \
+             util/libmemcachedutil.ver
 
 EXTRA_HEADERS = 
-BUILT_SOURCES = $(am__append_4)
+BUILT_SOURCES = $(am__append_7)
 noinst_HEADERS = libmemcached_probes.h \
                  memcached_io.h \
                  memcached_internal.h \
                  common.h \
-                 memcached/protocol_binary.h
+                 memcached/protocol_binary.h \
+                 protocol/common.h \
+                 protocol/ascii_handler.h \
+                 protocol/binary_handler.h
 
-pkginclude_HEADERS = memcached.h memcached.hpp memcached_batch.h \
-	memcached_configure.h memcached_constants.h memcached_get.h \
-	memcached_result.h memcached_server.h memcached_storage.h \
-	memcached_string.h memcached_types.h memcached_watchpoint.h \
-	visibility.h $(am__append_1)
-lib_LTLIBRARIES = libmemcached.la
-noinst_LTLIBRARIES = libmemcachedcallbacks.la
+pkginclude_HEADERS = memcached.h memcached.hpp exception.hpp \
+	memcached_batch.h memcached_configure.h memcached_constants.h \
+	memcached_get.h memcached_result.h memcached_server.h \
+	memcached_storage.h memcached_string.h memcached_types.h \
+	memcached_watchpoint.h protocol_handler.h visibility.h \
+	$(am__append_2)
+nobase_pkginclude_HEADERS = protocol/cache.h \
+                          protocol/callback.h
+
+libmemcachedprotocol_la_SOURCES = protocol/ascii_handler.c \
+                                 protocol/binary_handler.c \
+                                 protocol/cache.c \
+                                 protocol/pedantic.c \
+                                 protocol/protocol_handler.c
+
+libmemcachedprotocol_la_LDFLAGS = -version-info $(MEMCACHEDPROTOCOL_LIBRARY_VERSION) $(LD_PROTOCOL_VERSION_SCRIPT)
+lib_LTLIBRARIES = libmemcached.la libmemcachedprotocol.la \
+	$(am__append_3)
+noinst_LTLIBRARIES = libmemcachedcallbacks.la $(am__append_4)
 libmemcachedcallbacks_la_CFLAGS = ${AM_CFLAGS} ${NO_STRICT_ALIASING}
 libmemcachedcallbacks_la_SOURCES = memcached_callback.c
 libmemcached_la_CFLAGS = ${AM_CFLAGS} ${NO_CONVERSION}
@@ -357,11 +424,19 @@ libmemcached_la_SOURCES = crc.c memcached.c memcached_auto.c \
 	memcached_storage.c memcached_string.c memcached_stats.c \
 	memcached_strerror.c memcached_verbosity.c memcached_version.c \
 	murmur_hash.c jenkins_hash.c memcached_allocators.c \
-	$(am__append_2) $(am__append_3) $(am__append_5)
+	$(am__append_1) $(am__append_8)
 libmemcached_la_DEPENDENCIES = libmemcachedcallbacks.la \
-	$(am__append_6)
-libmemcached_la_LIBADD = $(LIBM) libmemcachedcallbacks.la
+	$(am__append_6) $(am__append_9)
+libmemcached_la_LIBADD = $(LIBM) libmemcachedcallbacks.la \
+	$(am__append_5)
 libmemcached_la_LDFLAGS = -version-info $(MEMCACHED_LIBRARY_VERSION) $(LD_VERSION_SCRIPT) $(LIBM)
+libmemcachedutil_la_SOURCES = util/memcached_pool.c
+libmemcachedutil_la_LDFLAGS = -version-info $(MEMCACHEDUTIL_LIBRARY_VERSION) $(LD_UTIL_VERSION_SCRIPT)
+libmemcachedutil_la_LIBADD = libmemcached.la
+libmemcachedutil_la_DEPENDENCIES = libmemcached.la
+@BUILD_BYTEORDER_TRUE@libbyteorder_la_SOURCES = byteorder.c byteorder.h
+@BUILD_BYTEORDER_TRUE@libmemcachedprotocol_la_LIBADD = libbyteorder.la
+@BUILD_BYTEORDER_TRUE@libmemcachedprotocol_la_DEPENDENCIES = libbyteorder.la
 SUFFIXES = .d
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -435,18 +510,60 @@ clean-noinstLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+libbyteorder.la: $(libbyteorder_la_OBJECTS) $(libbyteorder_la_DEPENDENCIES) 
+	$(LINK) $(am_libbyteorder_la_rpath) $(libbyteorder_la_OBJECTS) $(libbyteorder_la_LIBADD) $(LIBS)
 libmemcached.la: $(libmemcached_la_OBJECTS) $(libmemcached_la_DEPENDENCIES) 
 	$(libmemcached_la_LINK) -rpath $(libdir) $(libmemcached_la_OBJECTS) $(libmemcached_la_LIBADD) $(LIBS)
 libmemcachedcallbacks.la: $(libmemcachedcallbacks_la_OBJECTS) $(libmemcachedcallbacks_la_DEPENDENCIES) 
 	$(libmemcachedcallbacks_la_LINK)  $(libmemcachedcallbacks_la_OBJECTS) $(libmemcachedcallbacks_la_LIBADD) $(LIBS)
+protocol/$(am__dirstamp):
+	@$(MKDIR_P) protocol
+	@: > protocol/$(am__dirstamp)
+protocol/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) protocol/$(DEPDIR)
+	@: > protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/ascii_handler.lo: protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/binary_handler.lo: protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/cache.lo: protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/pedantic.lo: protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/protocol_handler.lo: protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
+libmemcachedprotocol.la: $(libmemcachedprotocol_la_OBJECTS) $(libmemcachedprotocol_la_DEPENDENCIES) 
+	$(libmemcachedprotocol_la_LINK) -rpath $(libdir) $(libmemcachedprotocol_la_OBJECTS) $(libmemcachedprotocol_la_LIBADD) $(LIBS)
+util/$(am__dirstamp):
+	@$(MKDIR_P) util
+	@: > util/$(am__dirstamp)
+util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) util/$(DEPDIR)
+	@: > util/$(DEPDIR)/$(am__dirstamp)
+util/memcached_pool.lo: util/$(am__dirstamp) \
+	util/$(DEPDIR)/$(am__dirstamp)
+libmemcachedutil.la: $(libmemcachedutil_la_OBJECTS) $(libmemcachedutil_la_DEPENDENCIES) 
+	$(libmemcachedutil_la_LINK) $(am_libmemcachedutil_la_rpath) $(libmemcachedutil_la_OBJECTS) $(libmemcachedutil_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f protocol/ascii_handler.$(OBJEXT)
+	-rm -f protocol/ascii_handler.lo
+	-rm -f protocol/binary_handler.$(OBJEXT)
+	-rm -f protocol/binary_handler.lo
+	-rm -f protocol/cache.$(OBJEXT)
+	-rm -f protocol/cache.lo
+	-rm -f protocol/pedantic.$(OBJEXT)
+	-rm -f protocol/pedantic.lo
+	-rm -f protocol/protocol_handler.$(OBJEXT)
+	-rm -f protocol/protocol_handler.lo
+	-rm -f util/memcached_pool.$(OBJEXT)
+	-rm -f util/memcached_pool.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-byteorder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/byteorder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-crc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-hsieh_hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-jenkins_hash.Plo@am__quote@
@@ -483,6 +600,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-memcached_version.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcached_la-murmur_hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmemcachedcallbacks_la-memcached_callback.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/ascii_handler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/binary_handler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/cache.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pedantic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/protocol_handler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/memcached_pool.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -753,13 +876,6 @@ libmemcached_la-hsieh_hash.lo: hsieh_hash.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_la_CFLAGS) $(CFLAGS) -c -o libmemcached_la-hsieh_hash.lo `test -f 'hsieh_hash.c' || echo '$(srcdir)/'`hsieh_hash.c
 
-libmemcached_la-byteorder.lo: byteorder.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_la_CFLAGS) $(CFLAGS) -MT libmemcached_la-byteorder.lo -MD -MP -MF $(DEPDIR)/libmemcached_la-byteorder.Tpo -c -o libmemcached_la-byteorder.lo `test -f 'byteorder.c' || echo '$(srcdir)/'`byteorder.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libmemcached_la-byteorder.Tpo $(DEPDIR)/libmemcached_la-byteorder.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='byteorder.c' object='libmemcached_la-byteorder.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_la_CFLAGS) $(CFLAGS) -c -o libmemcached_la-byteorder.lo `test -f 'byteorder.c' || echo '$(srcdir)/'`byteorder.c
-
 libmemcachedcallbacks_la-memcached_callback.lo: memcached_callback.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcachedcallbacks_la_CFLAGS) $(CFLAGS) -MT libmemcachedcallbacks_la-memcached_callback.lo -MD -MP -MF $(DEPDIR)/libmemcachedcallbacks_la-memcached_callback.Tpo -c -o libmemcachedcallbacks_la-memcached_callback.lo `test -f 'memcached_callback.c' || echo '$(srcdir)/'`memcached_callback.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libmemcachedcallbacks_la-memcached_callback.Tpo $(DEPDIR)/libmemcachedcallbacks_la-memcached_callback.Plo
@@ -772,6 +888,27 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf protocol/.libs protocol/_libs
+	-rm -rf util/.libs util/_libs
+install-nobase_pkgincludeHEADERS: $(nobase_pkginclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(pkgincludedir)" || $(MKDIR_P) "$(DESTDIR)$(pkgincludedir)"
+	@$(am__vpath_adj_setup) \
+	list='$(nobase_pkginclude_HEADERS)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  $(am__vpath_adj) \
+	  echo " $(nobase_pkgincludeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(pkgincludedir)/$$f'"; \
+	  $(nobase_pkgincludeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(pkgincludedir)/$$f"; \
+	done
+
+uninstall-nobase_pkgincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@$(am__vpath_adj_setup) \
+	list='$(nobase_pkginclude_HEADERS)'; for p in $$list; do \
+	  $(am__vpath_adj) \
+	  echo " rm -f '$(DESTDIR)$(pkgincludedir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pkgincludedir)/$$f"; \
+	done
 install-pkgincludeHEADERS: $(pkginclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(pkgincludedir)" || $(MKDIR_P) "$(DESTDIR)$(pkgincludedir)"
@@ -868,7 +1005,7 @@ check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -892,6 +1029,10 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-rm -f protocol/$(DEPDIR)/$(am__dirstamp)
+	-rm -f protocol/$(am__dirstamp)
+	-rm -f util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f util/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -903,7 +1044,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) protocol/$(DEPDIR) util/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -918,7 +1059,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgincludeHEADERS
+install-data-am: install-nobase_pkgincludeHEADERS \
+	install-pkgincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -937,7 +1079,7 @@ install-ps: install-ps-am
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) protocol/$(DEPDIR) util/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -954,7 +1096,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
+uninstall-am: uninstall-libLTLIBRARIES \
+	uninstall-nobase_pkgincludeHEADERS uninstall-pkgincludeHEADERS
 
 .MAKE: install-am install-strip
 
@@ -965,13 +1108,14 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-pkgincludeHEADERS install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-libLTLIBRARIES \
+	install-info-am install-libLTLIBRARIES install-man \
+	install-nobase_pkgincludeHEADERS install-pdf install-pdf-am \
+	install-pkgincludeHEADERS install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-libLTLIBRARIES uninstall-nobase_pkgincludeHEADERS \
 	uninstall-pkgincludeHEADERS
 
 
