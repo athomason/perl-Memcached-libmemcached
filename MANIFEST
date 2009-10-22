@@ -20,6 +20,7 @@ lib/Memcached/libmemcached/memcached_version.pm
 libmemcached.pm
 libmemcached.xs
 Makefile.PL
+MANIFEST
 MANIFEST.SKIP
 META.yml
 ppport.h
