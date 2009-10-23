@@ -4,7 +4,7 @@
 
 memcached_return memcached_purge(memcached_server_st *ptr)
 {
-  //uint32_t x;
+  uint32_t x;
   memcached_return ret= MEMCACHED_SUCCESS;
 
   if (ptr->root->purging || /* already purging */
@@ -30,7 +30,6 @@ memcached_return memcached_purge(memcached_server_st *ptr)
   }
   WATCHPOINT_ASSERT(ptr->fd != -1);
 
-  #if 0
   uint32_t no_msg= memcached_server_response_count(ptr) - 1;
   if (no_msg > 0)
   {
@@ -71,7 +70,6 @@ memcached_return memcached_purge(memcached_server_st *ptr)
     memcached_result_free(result_ptr);
     ptr->root->poll_timeout= timeo;
   }
-  #endif
   ptr->root->purging= 0;
 
   return ret;
