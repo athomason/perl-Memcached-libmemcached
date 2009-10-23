@@ -36,7 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @BUILD_LIBMEMCACHEDUTIL_TRUE@am__append_1 = $(top_builddir)/libmemcached/libmemcachedutil.la
-noinst_PROGRAMS = testapp$(EXEEXT) testplus$(EXEEXT) udptest$(EXEEXT) \
+noinst_PROGRAMS = testapp$(EXEEXT) udptest$(EXEEXT) \
 	atomsmasher$(EXEEXT) startservers$(EXEEXT)
 subdir = tests
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
@@ -100,9 +100,6 @@ testapp_DEPENDENCIES = $(top_builddir)/clients/libgenexec.la \
 testapp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(testapp_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_testplus_OBJECTS = plus.$(OBJEXT)
-testplus_OBJECTS = $(am_testplus_OBJECTS)
-testplus_DEPENDENCIES = libtest.la libserver.la $(LDADDS)
 am_udptest_OBJECTS = udp.$(OBJEXT)
 udptest_OBJECTS = $(am_udptest_OBJECTS)
 udptest_DEPENDENCIES = libtest.la libserver.la $(LDADDS)
@@ -118,21 +115,12 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 SOURCES = $(libserver_la_SOURCES) $(libtest_la_SOURCES) \
 	$(atomsmasher_SOURCES) $(startservers_SOURCES) \
-	$(testapp_SOURCES) $(testplus_SOURCES) $(udptest_SOURCES)
+	$(testapp_SOURCES) $(udptest_SOURCES)
 DIST_SOURCES = $(libserver_la_SOURCES) $(libtest_la_SOURCES) \
 	$(atomsmasher_SOURCES) $(startservers_SOURCES) \
-	$(testapp_SOURCES) $(testplus_SOURCES) $(udptest_SOURCES)
+	$(testapp_SOURCES) $(udptest_SOURCES)
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -320,8 +308,6 @@ libtest_la_SOURCES = test.c
 testapp_CFLAGS = $(AM_CFLAGS) $(NO_CONVERSION) $(NO_STRICT_ALIASING)
 testapp_SOURCES = function.c
 testapp_LDADD = $(top_builddir)/clients/libgenexec.la libtest.la libserver.la $(LDADDS)
-testplus_SOURCES = plus.cpp
-testplus_LDADD = libtest.la libserver.la $(LDADDS)
 udptest_SOURCES = udp.c
 udptest_LDADD = libtest.la libserver.la $(LDADDS)
 atomsmasher_SOURCES = atomsmasher.c
@@ -331,7 +317,7 @@ startservers_LDADD = libserver.la $(LDADDS)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cpp .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -390,9 +376,6 @@ startservers$(EXEEXT): $(startservers_OBJECTS) $(startservers_DEPENDENCIES)
 testapp$(EXEEXT): $(testapp_OBJECTS) $(testapp_DEPENDENCIES) 
 	@rm -f testapp$(EXEEXT)
 	$(testapp_LINK) $(testapp_OBJECTS) $(testapp_LDADD) $(LIBS)
-testplus$(EXEEXT): $(testplus_OBJECTS) $(testplus_DEPENDENCIES) 
-	@rm -f testplus$(EXEEXT)
-	$(CXXLINK) $(testplus_OBJECTS) $(testplus_LDADD) $(LIBS)
 udptest$(EXEEXT): $(udptest_OBJECTS) $(udptest_DEPENDENCIES) 
 	@rm -f udptest$(EXEEXT)
 	$(LINK) $(udptest_OBJECTS) $(udptest_LDADD) $(LIBS)
@@ -404,7 +387,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atomsmasher.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/start.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Plo@am__quote@
@@ -448,30 +430,6 @@ testapp-function.obj: function.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='function.c' object='testapp-function.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testapp_CFLAGS) $(CFLAGS) -c -o testapp-function.obj `if test -f 'function.c'; then $(CYGPATH_W) 'function.c'; else $(CYGPATH_W) '$(srcdir)/function.c'; fi`
-
-.cpp.o:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
-
-.cpp.obj:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.cpp.lo:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	mv -f $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -658,7 +616,6 @@ uninstall-am:
 
 record:
 	./testapp > output.res
-	./testplus > output_plus.res
 
 client-record:
 	sh t/memcat.test > r/memcat.res
@@ -670,14 +627,12 @@ client-record:
 record-extended:
 	./testapp extended > output2.res
 
-test: testapp testplus library_test memcapable
+test: testapp library_test memcapable
 	echo "Tests completed"
 
 library_test:
 	./testapp > output.cmp
 	diff output.res output.cmp
-#	./testplus > output_plus.cmp
-#	diff output_plus.res output_plus.cmp
 
 memcapable:
 	@MEMC_BINARY@ -d -P /tmp/Xumemc.pid -p 12555
