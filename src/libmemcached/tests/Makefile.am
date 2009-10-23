@@ -19,7 +19,7 @@ EXTRA_DIST = output.res output2.res\
 LIBS =
 
 noinst_HEADERS = test.h server.h ketama_test_cases.h
-noinst_PROGRAMS = testapp testplus udptest atomsmasher startservers
+noinst_PROGRAMS = testapp udptest atomsmasher startservers
 noinst_LTLIBRARIES= libserver.la libtest.la
 
 libserver_la_SOURCES= server.c
@@ -28,9 +28,6 @@ libtest_la_SOURCES= test.c
 testapp_CFLAGS= $(AM_CFLAGS) $(NO_CONVERSION) $(NO_STRICT_ALIASING)
 testapp_SOURCES = function.c
 testapp_LDADD = $(top_builddir)/clients/libgenexec.la libtest.la libserver.la $(LDADDS)
-
-testplus_SOURCES = plus.cpp
-testplus_LDADD = libtest.la libserver.la $(LDADDS)
 
 udptest_SOURCES = udp.c
 udptest_LDADD = libtest.la libserver.la $(LDADDS)
@@ -43,7 +40,6 @@ startservers_LDADD = libserver.la $(LDADDS)
 
 record:
 	./testapp > output.res
-	./testplus > output_plus.res
 
 client-record:
 	sh t/memcat.test > r/memcat.res
@@ -55,14 +51,12 @@ client-record:
 record-extended:
 	./testapp extended > output2.res
 
-test: testapp testplus library_test memcapable
+test: testapp library_test memcapable
 	echo "Tests completed"
 
 library_test:
 	./testapp > output.cmp
 	diff output.res output.cmp
-#	./testplus > output_plus.cmp
-#	diff output_plus.res output_plus.cmp
 
 memcapable:
 	@MEMC_BINARY@ -d -P /tmp/Xumemc.pid -p 12555
