@@ -2,6 +2,7 @@
 
 static memcached_return memcached_auto(memcached_st *ptr, 
                                        const char *verb,
+                                       const char *master_key, size_t master_key_length,
                                        const char *key, size_t key_length,
                                        unsigned int offset,
                                        uint64_t *value)
@@ -18,7 +19,7 @@ static memcached_return memcached_auto(memcached_st *ptr,
   if ((ptr->flags & MEM_VERIFY_KEY) && (memcached_key_test((const char **)&key, &key_length, 1) == MEMCACHED_BAD_KEY_PROVIDED))
     return MEMCACHED_BAD_KEY_PROVIDED;
 
-  server_key= memcached_generate_hash(ptr, key, key_length);
+  server_key= memcached_generate_hash(ptr, master_key, master_key_length);
 
   send_length= (size_t)snprintf(buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, 
                                 "%s %s%.*s %u%s\r\n", verb,
@@ -61,6 +62,7 @@ static memcached_return memcached_auto(memcached_st *ptr,
 }
 
 static memcached_return binary_incr_decr(memcached_st *ptr, uint8_t cmd,
+                                         const char *master_key, size_t master_key_length,
                                          const char *key, size_t key_length,
                                          uint64_t offset, uint64_t initial,
                                          uint32_t expiration,
@@ -72,7 +74,7 @@ static memcached_return binary_incr_decr(memcached_st *ptr, uint8_t cmd,
   unlikely (ptr->hosts == NULL || ptr->number_of_hosts == 0)
     return MEMCACHED_NO_SERVERS;
 
-  server_key= memcached_generate_hash(ptr, key, key_length);
+  server_key= memcached_generate_hash(ptr, master_key, master_key_length);
 
   if (no_reply)
   {
@@ -111,21 +113,7 @@ memcached_return memcached_increment(memcached_st *ptr,
                                      uint32_t offset,
                                      uint64_t *value)
 {
-  memcached_return rc= memcached_validate_key_length(key_length, ptr->flags & MEM_BINARY_PROTOCOL);
-  unlikely (rc != MEMCACHED_SUCCESS)
-    return rc;
-
-  LIBMEMCACHED_MEMCACHED_INCREMENT_START();
-  if (ptr->flags & MEM_BINARY_PROTOCOL) 
-    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_INCREMENT, key, key_length,
-                         (uint64_t)offset, 0, MEMCACHED_EXPIRATION_NOT_ADD,
-                         value);
-  else 
-     rc= memcached_auto(ptr, "incr", key, key_length, offset, value);
-  
-  LIBMEMCACHED_MEMCACHED_INCREMENT_END();
-
-  return rc;
+  return memcached_increment_by_key(ptr, key, key_length, key, key_length, offset, value);
 }
 
 memcached_return memcached_decrement(memcached_st *ptr, 
@@ -133,17 +121,51 @@ memcached_return memcached_decrement(memcached_st *ptr,
                                      uint32_t offset,
                                      uint64_t *value)
 {
+  return memcached_decrement_by_key(ptr, key, key_length, key, key_length, offset, value);
+}
+
+memcached_return memcached_increment_by_key(memcached_st *ptr, 
+                                            const char *master_key, size_t master_key_length,
+                                            const char *key, size_t key_length,
+                                            uint32_t offset,
+                                            uint64_t *value)
+{
+  memcached_return rc= memcached_validate_key_length(key_length, ptr->flags & MEM_BINARY_PROTOCOL);
+  unlikely (rc != MEMCACHED_SUCCESS)
+    return rc;
+
+  LIBMEMCACHED_MEMCACHED_INCREMENT_START();
+  if (ptr->flags & MEM_BINARY_PROTOCOL) 
+    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_INCREMENT,
+                         master_key, master_key_length, key, key_length,
+                         (uint64_t)offset, 0, MEMCACHED_EXPIRATION_NOT_ADD,
+                         value);
+  else 
+     rc= memcached_auto(ptr, "incr", master_key, master_key_length, key, key_length, offset, value);
+  
+  LIBMEMCACHED_MEMCACHED_INCREMENT_END();
+
+  return rc;
+}
+
+memcached_return memcached_decrement_by_key(memcached_st *ptr, 
+                                            const char *master_key, size_t master_key_length,
+                                            const char *key, size_t key_length,
+                                            uint32_t offset,
+                                            uint64_t *value)
+{
   memcached_return rc= memcached_validate_key_length(key_length, ptr->flags & MEM_BINARY_PROTOCOL);
   unlikely (rc != MEMCACHED_SUCCESS)
     return rc;
 
   LIBMEMCACHED_MEMCACHED_DECREMENT_START();
   if (ptr->flags & MEM_BINARY_PROTOCOL) 
-    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_DECREMENT, key, key_length,
+    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_DECREMENT,
+                         master_key, master_key_length, key, key_length,
                          (uint64_t)offset, 0, MEMCACHED_EXPIRATION_NOT_ADD,
                          value);
   else 
-    rc= memcached_auto(ptr, "decr", key, key_length, offset, value);      
+    rc= memcached_auto(ptr, "decr", master_key, master_key_length, key, key_length, offset, value);      
   
   LIBMEMCACHED_MEMCACHED_DECREMENT_END();
 
@@ -164,8 +186,9 @@ memcached_return memcached_increment_with_initial(memcached_st *ptr,
 
   LIBMEMCACHED_MEMCACHED_INCREMENT_WITH_INITIAL_START();
   if (ptr->flags & MEM_BINARY_PROTOCOL)
-    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_INCREMENT, key,
-                         key_length, offset, initial, (uint32_t)expiration, 
+    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_INCREMENT,
+                         key, key_length, key, key_length,
+                         offset, initial, (uint32_t)expiration, 
                          value);
   else
     rc= MEMCACHED_PROTOCOL_ERROR;
@@ -189,8 +212,9 @@ memcached_return memcached_decrement_with_initial(memcached_st *ptr,
 
   LIBMEMCACHED_MEMCACHED_DECREMENT_WITH_INITIAL_START();
   if (ptr->flags & MEM_BINARY_PROTOCOL)
-    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_DECREMENT, key,
-                         key_length, offset, initial, (uint32_t)expiration,
+    rc= binary_incr_decr(ptr, PROTOCOL_BINARY_CMD_DECREMENT,
+                         key, key_length, key, key_length,
+                         offset, initial, (uint32_t)expiration,
                          value);
   else
     rc= MEMCACHED_PROTOCOL_ERROR;

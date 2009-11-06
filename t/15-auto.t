@@ -22,7 +22,7 @@ use libmemcached_test;
 
 my $memc = libmemcached_test_create();
 
-plan tests => 9;
+plan tests => 13;
 
 my $t1= time();
 my $k1= "$0-test-key-$t1"; # can't have spaces
@@ -48,6 +48,15 @@ ok memcached_increment($memc, $k1, 1, $v2),
 is $v2, $v1+2;
 
 ok memcached_decrement($memc, $k1, 1, $v2),
+    'should increment existing value';
+is $v2, $v1+1;
+
+# master-key support
+ok memcached_increment($memc, [$k1, $k1], 1, $v2),
+    'should increment existing value';
+is $v2, $v1+2;
+
+ok memcached_decrement($memc, [$k1, $k1], 1, $v2),
     'should increment existing value';
 is $v2, $v1+1;
 

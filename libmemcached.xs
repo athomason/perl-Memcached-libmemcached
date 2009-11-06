@@ -561,13 +561,47 @@ memcached_cas_by_key(Memcached__libmemcached ptr, \
 
 memcached_return
 memcached_increment(Memcached__libmemcached ptr, \
-        lmc_key key, size_t length(key), \
+        SV *key_sv, \
         unsigned int offset, IN_OUT uint64_t value=NO_INIT)
+    PREINIT:
+        char *master_key = NULL;
+        size_t master_key_len = 0;
+        char *key;
+        size_t key_len;
+    CODE:
+        if (SvROK(key_sv) && SvTYPE(SvRV(key_sv)) == SVt_PVAV) {
+            AV *av = (AV*)SvRV(key_sv);
+            master_key = SvPV(AvARRAY(av)[0], master_key_len);
+            key_sv = AvARRAY(av)[1];
+        }
+        else
+            master_key = SvPV(key_sv, master_key_len);
+        key = SvPV(key_sv, key_len);
+        RETVAL = memcached_increment_by_key(ptr, master_key, master_key_len, key, key_len, offset, &value);
+    OUTPUT:
+        RETVAL
 
 memcached_return
 memcached_decrement(Memcached__libmemcached ptr, \
-        lmc_key key, size_t length(key), \
+        SV *key_sv, \
         unsigned int offset, IN_OUT uint64_t value=NO_INIT)
+    PREINIT:
+        char *master_key = NULL;
+        size_t master_key_len = 0;
+        char *key;
+        size_t key_len;
+    CODE:
+        if (SvROK(key_sv) && SvTYPE(SvRV(key_sv)) == SVt_PVAV) {
+            AV *av = (AV*)SvRV(key_sv);
+            master_key = SvPV(AvARRAY(av)[0], master_key_len);
+            key_sv = AvARRAY(av)[1];
+        }
+        else
+            master_key = SvPV(key_sv, master_key_len);
+        key = SvPV(key_sv, key_len);
+        RETVAL = memcached_decrement_by_key(ptr, master_key, master_key_len, key, key_len, offset, &value);
+    OUTPUT:
+        RETVAL
 
 
 

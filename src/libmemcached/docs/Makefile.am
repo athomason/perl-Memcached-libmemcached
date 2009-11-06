@@ -30,6 +30,7 @@ EXTRA_DIST = libmemcached.pod\
 	memcached_version.pod\
 	memflush.pod\
 	memdump.pod\
+	memcached_batch.pod\
 	memcached_flush_buffers.pod\
         memcached_analyze.pod\
         memcached_generate_hash_value.pod\
