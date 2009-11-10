@@ -275,7 +275,7 @@ memcached_return memcached_mget_by_key(memcached_st *ptr,
                                        size_t number_of_keys)
 {
   return memcached_mget_by_key_real(ptr, master_key, master_key_length, keys, 
-                                    key_length, number_of_keys, true);
+                                    key_length, number_of_keys, number_of_keys > 1);
 }
 
 static memcached_return binary_batch_dispatch(memcached_st *ptr,
