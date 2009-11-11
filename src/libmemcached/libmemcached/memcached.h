@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 #define MEMCACHED_VERSION_STRING_LENGTH 24
-#define LIBMEMCACHED_VERSION_STRING "0.34"
+#define LIBMEMCACHED_VERSION_STRING "0.35"
 
 struct memcached_analysis_st {
   uint32_t average_item_size;
@@ -150,14 +150,14 @@ LIBMEMCACHED_API
 memcached_return memcached_increment_by_key(memcached_st *ptr, 
                                             const char *master_key, size_t master_key_length,
                                             const char *key, size_t key_length,
-                                            uint32_t offset,
+                                            uint64_t offset,
                                             uint64_t *value);
 
 LIBMEMCACHED_API
 memcached_return memcached_decrement_by_key(memcached_st *ptr, 
                                             const char *master_key, size_t master_key_length,
                                             const char *key, size_t key_length,
-                                            uint32_t offset,
+                                            uint64_t offset,
                                             uint64_t *value);
 
 LIBMEMCACHED_API
@@ -176,6 +176,26 @@ memcached_return memcached_decrement_with_initial(memcached_st *ptr,
                                                   uint64_t initial,
                                                   time_t expiration,
                                                   uint64_t *value);
+LIBMEMCACHED_API
+memcached_return memcached_increment_with_initial_by_key(memcached_st *ptr,
+                                                         const char *master_key,
+                                                         size_t master_key_length,
+                                                         const char *key,
+                                                         size_t key_length,
+                                                         uint64_t offset,
+                                                         uint64_t initial,
+                                                         time_t expiration,
+                                                         uint64_t *value);
+LIBMEMCACHED_API
+memcached_return memcached_decrement_with_initial_by_key(memcached_st *ptr,
+                                                         const char *master_key,
+                                                         size_t master_key_length,
+                                                         const char *key,
+                                                         size_t key_length,
+                                                         uint64_t offset,
+                                                         uint64_t initial,
+                                                         time_t expiration,
+                                                         uint64_t *value);
 LIBMEMCACHED_API
 void memcached_stat_free(memcached_st *, memcached_stat_st *);
 LIBMEMCACHED_API

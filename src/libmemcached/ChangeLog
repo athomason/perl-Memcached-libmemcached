@@ -1,3 +1,10 @@
+0.35 Mon Nov  9 11:18:33 PST 2009
+  * Added support for by_key operations for inc/dec methods.
+  * Added mget test to memslap.
+  * Support for compatible ketama for SpyMemcached
+  * Update C++ interface.
+  * Fix for memcp
+
 0.34 Tue Oct 13 08:39:51 PDT 2009
   * Added support for setting behavior flags on a connection pool.
   * Don't increment server_failure_counter on normal disconnects.

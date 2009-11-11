@@ -297,10 +297,10 @@ static test_return_t  error_test(memcached_st *memc)
                         4269430871U, 610793021U, 527273862U, 1437122909U,
                         2300930706U, 2943759320U, 674306647U, 2400528935U,
                         54481931U, 4186304426U, 1741088401U, 2979625118U,
-                        4159057246U, 3425930182U};
+                        4159057246U, 3425930182U, 2593724503U};
 
   // You have updated the memcache_error messages but not updated docs/tests.
-  assert(MEMCACHED_MAXIMUM_RETURN == 38);
+  assert(MEMCACHED_MAXIMUM_RETURN == 39);
   for (rc= MEMCACHED_SUCCESS; rc < MEMCACHED_MAXIMUM_RETURN; rc++)
   {
     uint32_t hash_val;
@@ -1236,6 +1236,112 @@ static test_return_t  decrement_with_initial_test(memcached_st *memc)
   return TEST_SUCCESS;
 }
 
+static test_return_t  increment_by_key_test(memcached_st *memc)
+{
+  uint64_t new_number;
+  memcached_return rc;
+  const char *master_key= "foo";
+  const char *key= "number";
+  const char *value= "0";
+
+  rc= memcached_set_by_key(memc, master_key, strlen(master_key),
+                           key, strlen(key),
+                           value, strlen(value),
+                           (time_t)0, (uint32_t)0);
+  assert(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
+
+  rc= memcached_increment_by_key(memc, master_key, strlen(master_key), key, strlen(key),
+                                 1, &new_number);
+  assert(rc == MEMCACHED_SUCCESS);
+  assert(new_number == 1);
+
+  rc= memcached_increment_by_key(memc, master_key, strlen(master_key), key, strlen(key),
+                                 1, &new_number);
+  assert(rc == MEMCACHED_SUCCESS);
+  assert(new_number == 2);
+
+  return TEST_SUCCESS;
+}
+
+static test_return_t  increment_with_initial_by_key_test(memcached_st *memc)
+{
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL) != 0)
+  {
+    uint64_t new_number;
+    memcached_return rc;
+    const char *master_key= "foo";
+    const char *key= "number";
+    uint64_t initial= 0;
+
+    rc= memcached_increment_with_initial_by_key(memc, master_key, strlen(master_key),
+                                                key, strlen(key),
+                                                1, initial, 0, &new_number);
+    assert(rc == MEMCACHED_SUCCESS);
+    assert(new_number == initial);
+
+    rc= memcached_increment_with_initial_by_key(memc, master_key, strlen(master_key),
+                                                key, strlen(key),
+                                                1, initial, 0, &new_number);
+    assert(rc == MEMCACHED_SUCCESS);
+    assert(new_number == (initial + 1));
+  }
+  return TEST_SUCCESS;
+}
+
+static test_return_t  decrement_by_key_test(memcached_st *memc)
+{
+  uint64_t new_number;
+  memcached_return rc;
+  const char *master_key= "foo";
+  const char *key= "number";
+  const char *value= "3";
+
+  rc= memcached_set_by_key(memc, master_key, strlen(master_key),
+                           key, strlen(key),
+                           value, strlen(value),
+                           (time_t)0, (uint32_t)0);
+  assert(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
+
+  rc= memcached_decrement_by_key(memc, master_key, strlen(master_key),
+                                 key, strlen(key),
+                                 1, &new_number);
+  assert(rc == MEMCACHED_SUCCESS);
+  assert(new_number == 2);
+
+  rc= memcached_decrement_by_key(memc, master_key, strlen(master_key),
+                                 key, strlen(key),
+                                 1, &new_number);
+  assert(rc == MEMCACHED_SUCCESS);
+  assert(new_number == 1);
+
+  return TEST_SUCCESS;
+}
+
+static test_return_t  decrement_with_initial_by_key_test(memcached_st *memc)
+{
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL) != 0)
+  {
+    uint64_t new_number;
+    memcached_return rc;
+    const char *master_key= "foo";
+    const char *key= "number";
+    uint64_t initial= 3;
+
+    rc= memcached_decrement_with_initial_by_key(memc, master_key, strlen(master_key),
+                                                key, strlen(key),
+                                                1, initial, 0, &new_number);
+    assert(rc == MEMCACHED_SUCCESS);
+    assert(new_number == initial);
+
+    rc= memcached_decrement_with_initial_by_key(memc, master_key, strlen(master_key),
+                                                key, strlen(key),
+                                                1, initial, 0, &new_number);
+    assert(rc == MEMCACHED_SUCCESS);
+    assert(new_number == (initial - 1));
+  }
+  return TEST_SUCCESS;
+}
+
 static test_return_t  quit_test(memcached_st *memc)
 {
   memcached_return rc;
@@ -1475,7 +1581,7 @@ static test_return_t mget_execute(memcached_st *memc)
   memc->number_of_hosts= 1;
 
   int max_keys= binary ? 20480 : 1;
-  
+
 
   char **keys= calloc((size_t)max_keys, sizeof(char*));
   size_t *key_length=calloc((size_t)max_keys, sizeof(size_t));
@@ -2602,9 +2708,9 @@ static test_return_t user_supplied_bug18(memcached_st *trash)
   /* verify the standard ketama set. */
   for (x= 0; x < 99; x++)
   {
-    uint32_t server_idx = memcached_generate_hash(memc, test_cases[x].key, strlen(test_cases[x].key));
+    uint32_t server_idx = memcached_generate_hash(memc, ketama_test_cases[x].key, strlen(ketama_test_cases[x].key));
     char *hostname = memc->hosts[server_idx].hostname;
-    assert(strcmp(hostname, test_cases[x].server) == 0);
+    assert(strcmp(hostname, ketama_test_cases[x].server) == 0);
   }
 
   memcached_server_list_free(server_pool);
@@ -2747,7 +2853,7 @@ static test_return_t auto_eject_hosts(memcached_st *trash)
 
   for (int x= 0; x < 99; x++)
   {
-    uint32_t server_idx = memcached_generate_hash(memc, test_cases[x].key, strlen(test_cases[x].key));
+    uint32_t server_idx = memcached_generate_hash(memc, ketama_test_cases[x].key, strlen(ketama_test_cases[x].key));
     assert(server_idx != 2);
   }
 
@@ -2757,9 +2863,9 @@ static test_return_t auto_eject_hosts(memcached_st *trash)
   run_distribution(memc);
   for (int x= 0; x < 99; x++)
   {
-    uint32_t server_idx = memcached_generate_hash(memc, test_cases[x].key, strlen(test_cases[x].key));
+    uint32_t server_idx = memcached_generate_hash(memc, ketama_test_cases[x].key, strlen(ketama_test_cases[x].key));
     char *hostname = memc->hosts[server_idx].hostname;
-    assert(strcmp(hostname, test_cases[x].server) == 0);
+    assert(strcmp(hostname, ketama_test_cases[x].server) == 0);
   }
 
   memcached_server_list_free(server_pool);
@@ -2767,6 +2873,62 @@ static test_return_t auto_eject_hosts(memcached_st *trash)
 
   return TEST_SUCCESS;
 }
+
+static test_return_t output_ketama_weighted_keys(memcached_st *trash)
+{
+  (void) trash;
+
+  memcached_return rc;
+  memcached_st *memc= memcached_create(NULL);
+  assert(memc);
+
+
+  rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED, 1);
+  assert(rc == MEMCACHED_SUCCESS);
+
+  uint64_t value= memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED);
+  assert(value == 1);
+
+  rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_HASH, MEMCACHED_HASH_MD5);
+  assert(rc == MEMCACHED_SUCCESS);
+
+  value= memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_HASH);
+  assert(value == MEMCACHED_HASH_MD5);
+
+
+  assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_COMPAT_MODE,
+                                MEMCACHED_KETAMA_COMPAT_SPY) == MEMCACHED_SUCCESS);
+
+  memcached_server_st *server_pool;
+  server_pool = memcached_servers_parse("10.0.1.1:11211,10.0.1.2:11211,10.0.1.3:11211,10.0.1.4:11211,10.0.1.5:11211,10.0.1.6:11211,10.0.1.7:11211,10.0.1.8:11211,192.168.1.1:11211,192.168.100.1:11211");
+  memcached_server_push(memc, server_pool);
+
+  FILE *fp;
+  if ((fp = fopen("ketama_keys.txt", "w")))
+  {
+    // noop
+  } else {
+    printf("cannot write to file ketama_keys.txt");
+    return TEST_FAILURE;
+  }
+
+  for (int x= 0; x < 10000; x++)
+  {
+    char key[10];
+    sprintf(key, "%d", x);
+
+    uint32_t server_idx = memcached_generate_hash(memc, key, strlen(key));
+    char *hostname = memc->hosts[server_idx].hostname;
+    unsigned int port = memc->hosts[server_idx].port;
+    fprintf(fp, "key %s is on host /%s:%u\n", key, hostname, port);
+  }
+  fclose(fp);
+  memcached_server_list_free(server_pool);
+  memcached_free(memc);
+
+  return TEST_SUCCESS;
+}
+
 
 static test_return_t  result_static(memcached_st *memc)
 {
@@ -4678,6 +4840,125 @@ static test_return_t jenkins_run (memcached_st *memc __attribute__((unused)))
   return TEST_SUCCESS;
 }
 
+
+static test_return_t ketama_compatibility_libmemcached(memcached_st *trash)
+{
+  memcached_return rc;
+  uint64_t value;
+  int x;
+  memcached_server_st *server_pool;
+  memcached_st *memc;
+
+  (void)trash;
+
+  memc= memcached_create(NULL);
+  assert(memc);
+
+  rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED, 1);
+  assert(rc == MEMCACHED_SUCCESS);
+
+  value= memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED);
+  assert(value == 1);
+
+  assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_COMPAT_MODE,
+                                MEMCACHED_KETAMA_COMPAT_LIBMEMCACHED) == MEMCACHED_SUCCESS);
+
+  assert(memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_COMPAT_MODE) ==
+         MEMCACHED_KETAMA_COMPAT_LIBMEMCACHED);
+
+  server_pool = memcached_servers_parse("10.0.1.1:11211 600,10.0.1.2:11211 300,10.0.1.3:11211 200,10.0.1.4:11211 350,10.0.1.5:11211 1000,10.0.1.6:11211 800,10.0.1.7:11211 950,10.0.1.8:11211 100");
+  memcached_server_push(memc, server_pool);
+
+  /* verify that the server list was parsed okay. */
+  assert(memc->number_of_hosts == 8);
+  assert(strcmp(server_pool[0].hostname, "10.0.1.1") == 0);
+  assert(server_pool[0].port == 11211);
+  assert(server_pool[0].weight == 600);
+  assert(strcmp(server_pool[2].hostname, "10.0.1.3") == 0);
+  assert(server_pool[2].port == 11211);
+  assert(server_pool[2].weight == 200);
+  assert(strcmp(server_pool[7].hostname, "10.0.1.8") == 0);
+  assert(server_pool[7].port == 11211);
+  assert(server_pool[7].weight == 100);
+
+  /* VDEAAAAA hashes to fffcd1b5, after the last continuum point, and lets
+   * us test the boundary wraparound.
+   */
+  assert(memcached_generate_hash(memc, (char *)"VDEAAAAA", 8) == memc->continuum[0].index);
+
+  /* verify the standard ketama set. */
+  for (x= 0; x < 99; x++)
+  {
+    uint32_t server_idx = memcached_generate_hash(memc, ketama_test_cases[x].key, strlen(ketama_test_cases[x].key));
+    char *hostname = memc->hosts[server_idx].hostname;
+    assert(strcmp(hostname, ketama_test_cases[x].server) == 0);
+  }
+
+  memcached_server_list_free(server_pool);
+  memcached_free(memc);
+
+  return TEST_SUCCESS;
+}
+
+static test_return_t ketama_compatibility_spymemcached(memcached_st *trash)
+{
+  memcached_return rc;
+  uint64_t value;
+  int x;
+  memcached_server_st *server_pool;
+  memcached_st *memc;
+
+  (void)trash;
+
+  memc= memcached_create(NULL);
+  assert(memc);
+
+  rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED, 1);
+  assert(rc == MEMCACHED_SUCCESS);
+
+  value= memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_WEIGHTED);
+  assert(value == 1);
+
+  assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_KETAMA_COMPAT_MODE,
+                                MEMCACHED_KETAMA_COMPAT_SPY) == MEMCACHED_SUCCESS);
+
+  assert(memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_KETAMA_COMPAT_MODE) ==
+         MEMCACHED_KETAMA_COMPAT_SPY);
+
+  server_pool = memcached_servers_parse("10.0.1.1:11211 600,10.0.1.2:11211 300,10.0.1.3:11211 200,10.0.1.4:11211 350,10.0.1.5:11211 1000,10.0.1.6:11211 800,10.0.1.7:11211 950,10.0.1.8:11211 100");
+  memcached_server_push(memc, server_pool);
+
+  /* verify that the server list was parsed okay. */
+  assert(memc->number_of_hosts == 8);
+  assert(strcmp(server_pool[0].hostname, "10.0.1.1") == 0);
+  assert(server_pool[0].port == 11211);
+  assert(server_pool[0].weight == 600);
+  assert(strcmp(server_pool[2].hostname, "10.0.1.3") == 0);
+  assert(server_pool[2].port == 11211);
+  assert(server_pool[2].weight == 200);
+  assert(strcmp(server_pool[7].hostname, "10.0.1.8") == 0);
+  assert(server_pool[7].port == 11211);
+  assert(server_pool[7].weight == 100);
+
+  /* VDEAAAAA hashes to fffcd1b5, after the last continuum point, and lets
+   * us test the boundary wraparound.
+   */
+  assert(memcached_generate_hash(memc, (char *)"VDEAAAAA", 8) == memc->continuum[0].index);
+
+  /* verify the standard ketama set. */
+  for (x= 0; x < 99; x++)
+  {
+    uint32_t server_idx = memcached_generate_hash(memc, ketama_test_cases_spy[x].key, strlen(ketama_test_cases_spy[x].key));
+    char *hostname = memc->hosts[server_idx].hostname;
+    assert(strcmp(hostname, ketama_test_cases_spy[x].server) == 0);
+  }
+
+  memcached_server_list_free(server_pool);
+  memcached_free(memc);
+
+  return TEST_SUCCESS;
+}
+
 static test_return_t regression_bug_434484(memcached_st *memc)
 {
   if (pre_binary(memc) != MEMCACHED_SUCCESS)
@@ -4889,8 +5170,8 @@ static test_return_t regression_bug_447342(memcached_st *memc)
   ** to do this ;-)
   */
   memcached_quit(memc);
-  
-  /* Verify that all messages are stored, and we didn't stuff too much 
+
+  /* Verify that all messages are stored, and we didn't stuff too much
    * into the servers
    */
   rc= memcached_mget(memc, (const char* const *)keys, key_length, max_keys);
@@ -4958,6 +5239,63 @@ static test_return_t regression_bug_447342(memcached_st *memc)
   memc->hosts[2].port= port2;
   return TEST_SUCCESS;
 }
+
+static test_return_t regression_bug_463297(memcached_st *memc)
+{
+  memcached_st *memc_clone= memcached_clone(NULL, memc);
+  assert(memc_clone != NULL);
+  assert(memcached_version(memc_clone) == MEMCACHED_SUCCESS);
+
+  if (memc_clone->hosts[0].major_version > 1 ||
+      (memc_clone->hosts[0].major_version == 1 &&
+       memc_clone->hosts[0].minor_version > 2))
+  {
+     /* Binary protocol doesn't support deferred delete */
+     memcached_st *bin_clone= memcached_clone(NULL, memc);
+     assert(bin_clone != NULL);
+     assert(memcached_behavior_set(bin_clone, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, 1) == MEMCACHED_SUCCESS);
+     assert(memcached_delete(bin_clone, "foo", 3, 1) == MEMCACHED_INVALID_ARGUMENTS);
+     memcached_free(bin_clone);
+
+     memcached_quit(memc_clone);
+
+     /* If we know the server version, deferred delete should fail
+      * with invalid arguments */
+     assert(memcached_delete(memc_clone, "foo", 3, 1) == MEMCACHED_INVALID_ARGUMENTS);
+
+     /* If we don't know the server version, we should get a protocol error */
+     memcached_return rc= memcached_delete(memc, "foo", 3, 1);
+     /* but there is a bug in some of the memcached servers (1.4) that treats
+      * the counter as noreply so it doesn't send the proper error message
+      */
+     assert(rc == MEMCACHED_PROTOCOL_ERROR || rc == MEMCACHED_NOTFOUND || rc == MEMCACHED_CLIENT_ERROR);
+
+     /* And buffered mode should be disabled and we should get protocol error */
+     assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BUFFER_REQUESTS, 1) == MEMCACHED_SUCCESS);
+     rc= memcached_delete(memc, "foo", 3, 1);
+     assert(rc == MEMCACHED_PROTOCOL_ERROR || rc == MEMCACHED_NOTFOUND || rc == MEMCACHED_CLIENT_ERROR);
+
+     /* Same goes for noreply... */
+     assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_NOREPLY, 1) == MEMCACHED_SUCCESS);
+     rc= memcached_delete(memc, "foo", 3, 1);
+     assert(rc == MEMCACHED_PROTOCOL_ERROR || rc == MEMCACHED_NOTFOUND || rc == MEMCACHED_CLIENT_ERROR);
+
+     /* but a normal request should go through (and be buffered) */
+     assert((rc= memcached_delete(memc, "foo", 3, 0)) == MEMCACHED_BUFFERED);
+     assert(memcached_flush_buffers(memc) == MEMCACHED_SUCCESS);
+
+     assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BUFFER_REQUESTS, 0) == MEMCACHED_SUCCESS);
+     /* unbuffered noreply should be success */
+     assert(memcached_delete(memc, "foo", 3, 0) == MEMCACHED_SUCCESS);
+     /* unbuffered with reply should be not found... */
+     assert(memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_NOREPLY, 0) == MEMCACHED_SUCCESS);
+     assert(memcached_delete(memc, "foo", 3, 0) == MEMCACHED_NOTFOUND);
+  }
+
+  memcached_free(memc_clone);
+  return TEST_SUCCESS;
+}
+
 
 /* Test memcached_server_get_last_disconnect
  * For a working server set, shall be NULL
@@ -5114,6 +5452,10 @@ test_st tests[] ={
   {"increment_with_initial", 1, increment_with_initial_test },
   {"decrement", 0, decrement_test },
   {"decrement_with_initial", 1, decrement_with_initial_test },
+  {"increment_by_key", 0, increment_by_key_test },
+  {"increment_with_initial_by_key", 1, increment_with_initial_by_key_test },
+  {"decrement_by_key", 0, decrement_by_key_test },
+  {"decrement_with_initial_by_key", 1, decrement_with_initial_by_key_test },
   {"quit", 0, quit_test },
   {"mget", 1, mget_test },
   {"mget_result", 1, mget_result_test },
@@ -5228,6 +5570,13 @@ test_st regression_tests[]= {
   {"lp:421108", 1, regression_bug_421108 },
   {"lp:442914", 1, regression_bug_442914 },
   {"lp:447342", 1, regression_bug_447342 },
+  {"lp:463297", 1, regression_bug_463297 },
+  {0, 0, 0}
+};
+
+test_st ketama_compatibility[]= {
+  {"libmemcached", 1, ketama_compatibility_libmemcached },
+  {"spymemcached", 1, ketama_compatibility_spymemcached },
   {0, 0, 0}
 };
 
@@ -5273,6 +5622,7 @@ test_st hsieh_availability[] ={
 
 test_st ketama_auto_eject_hosts[] ={
   {"auto_eject_hosts", 1, auto_eject_hosts },
+  {"output_ketama_weighted_keys", 1, output_ketama_weighted_keys },
   {0, 0, 0}
 };
 
@@ -5336,6 +5686,7 @@ collection_st collection[] ={
   {"consistent_not", 0, 0, consistent_tests},
   {"consistent_ketama", pre_behavior_ketama, 0, consistent_tests},
   {"consistent_ketama_weighted", pre_behavior_ketama_weighted, 0, consistent_weighted_tests},
+  {"ketama_compat", 0, 0, ketama_compatibility},
   {"test_hashes", 0, 0, hash_tests},
   {"replication", pre_replication, 0, replication_tests},
   {"replication_noblock", pre_replication_noblock, 0, replication_tests},

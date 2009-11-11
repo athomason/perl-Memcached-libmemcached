@@ -235,6 +235,7 @@ src/libmemcached/support/set_benchmark.sh
 src/libmemcached/tests/atomsmasher.c
 src/libmemcached/tests/function.c
 src/libmemcached/tests/ketama_test_cases.h
+src/libmemcached/tests/ketama_test_cases_spy.h
 src/libmemcached/tests/Makefile.am
 src/libmemcached/tests/Makefile.in
 src/libmemcached/tests/output2.res
