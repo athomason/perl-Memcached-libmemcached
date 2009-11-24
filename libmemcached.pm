@@ -9,11 +9,11 @@ Memcached::libmemcached - Thin fast full interface to the libmemcached client AP
 
 =head1 VERSION
 
-Version 0.3501 (with libmemcached-0.34 embedded)
+Version 0.3502 (with libmemcached-0.35 embedded)
 
 =cut
 
-our $VERSION = '0.3501';
+our $VERSION = '0.3502';
 
 use Carp;
 use base qw(Exporter);
@@ -236,6 +236,18 @@ See L<Memcached::libmemcached::memcached_behavior>.
 
 Get the value of a particular option.
 See L<Memcached::libmemcached::memcached_behavior>.
+
+=head3 memcached_prefix_set
+
+  memcached_prefix_set($memc, $prefix);
+
+Changes the value of the prefix string.
+
+=head3 memcached_prefix_get
+
+  memcached_prefix_get($memc);
+
+Get the value of the prefix string.
 
 =cut
 

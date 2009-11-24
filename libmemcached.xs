@@ -471,6 +471,26 @@ memcached_behavior_get(Memcached__libmemcached ptr, memcached_behavior flag)
 memcached_return
 memcached_behavior_set(Memcached__libmemcached ptr, memcached_behavior flag, uint64_t data)
 
+memcached_return
+memcached_prefix_set(Memcached__libmemcached ptr, lmc_key key, size_t length(key))
+    CODE:
+        RETVAL = memcached_callback_set(ptr, MEMCACHED_CALLBACK_PREFIX_KEY, key);
+    OUTPUT:
+        RETVAL
+
+SV *
+memcached_prefix_get(Memcached__libmemcached ptr)
+    PREINIT:
+        memcached_return rc;
+    CODE:
+        char *prefix = memcached_callback_get(ptr, MEMCACHED_CALLBACK_PREFIX_KEY, &rc);
+        if (rc == MEMCACHED_SUCCESS && prefix)
+            RETVAL = newSVpv(prefix, 0);
+        else
+            RETVAL = &PL_sv_undef;
+    OUTPUT:
+        RETVAL
+
 
 =head2 Functions for Setting Values in memcached
 
